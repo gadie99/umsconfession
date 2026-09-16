@@ -885,7 +885,7 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {confessions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Belum ada confession yang diluluskan lagi. Jadilah yang pertama!</p>
+                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Belum ada confession. Jadilah yang pertama!</p>
               </div>
             ) : (
               confessions.map((item) => {
