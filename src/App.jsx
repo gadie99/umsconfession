@@ -929,7 +929,7 @@ export default function App() {
           {/* FOOTER INTERAKTIF */}
           <footer style={{ textAlign: 'center', padding: '20px 0 10px 0', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '12px', fontWeight: '600' }}>
             <p style={{ margin: '0 0 6px 0' }}>UMS HUB CONFESSION &copy; 2026 • Platform Komuniti Pelajar UMS Sabah</p>
-            <p style={{ margin: 0, fontSize: '11px' }}>Dibangunkan khas dengan semangat perpaduan mahasiswa.</p>
+            <p style={{ margin: 0, fontSize: '11px' }}>Penafian: Segala hantaran dan luahan adalah pandangan peribadi individu dan tidak mencerminkan pendirian rasmi pihak pentadbir platform atau mana-mana institusi. Pihak pentadbir berhak memadam hantaran yang melanggar garis panduan komuniti</p>
           </footer>
 
         </div>
