@@ -481,13 +481,14 @@ export default function App() {
             <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>UMS Sabah • Share, connect, explore safely</p>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', padding: '16px 20px', borderRadius: '16px', marginBottom: '25px', border: '2px solid #0f172a', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+          {/* Kotak Menulis Confession (Ketinggian Dikecilkan kepada rows="2") */}
+          <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', padding: '14px 18px', borderRadius: '16px', marginBottom: '25px', border: '2px solid #0f172a', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>Pilih kategori luahan anda:</span>
               <select 
                 value={category} 
                 onChange={(e) => setCategory(e.target.value)}
-                style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', backgroundColor: '#f8fafc', fontWeight: '700', color: '#0f172a' }}
+                style={{ padding: '5px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', backgroundColor: '#f8fafc', fontWeight: '700', color: '#0f172a' }}
               >
                 <option value="Campus Life">Campus Life</option>
                 <option value="Crushes and Romances">Crushes and Romances</option>
@@ -497,15 +498,15 @@ export default function App() {
             </div>
 
             <textarea 
-              rows="3" 
+              rows="2" 
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="What's on your mind? Share your confession..." 
-              style={{ width: '100%', padding: '10px 0', border: 'none', borderBottom: '1px solid #f1f5f9', outline: 'none', resize: 'vertical', fontSize: '14px', boxSizing: 'border-box', fontFamily: 'inherit', backgroundColor: '#ffffff', color: '#0f172a' }}
+              style={{ width: '100%', padding: '8px 0', border: 'none', borderBottom: '1px solid #f1f5f9', outline: 'none', resize: 'vertical', fontSize: '14px', boxSizing: 'border-box', fontFamily: 'inherit', backgroundColor: '#ffffff', color: '#0f172a' }}
               required
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
               <button 
                 type="submit" 
                 disabled={loading}
@@ -601,7 +602,6 @@ export default function App() {
                               return (
                                 <div key={cmt.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
                                   
-                                  {/* Komen Utama */}
                                   <div style={{ 
                                     backgroundColor: isMyComment ? '#eef2ff' : '#ffffff', 
                                     border: isMyComment ? '1px solid #c7d2fe' : '1px solid #e2e8f0',
@@ -638,7 +638,6 @@ export default function App() {
                                     </div>
                                   </div>
 
-                                  {/* Kotak Input untuk Reply Komen Utama */}
                                   {isReplyingOpen && (
                                     <form onSubmit={(e) => handleReplySubmit(item.id, cmt.id, cmt.id, e)} style={{ display: 'flex', gap: '6px', paddingLeft: '20px', marginTop: '4px' }}>
                                       <input 
@@ -658,7 +657,6 @@ export default function App() {
                                     </form>
                                   )}
 
-                                  {/* Senarai Balasan (Replies) */}
                                   {cmt.replies && cmt.replies.length > 0 && (
                                     <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                       {cmt.replies.map((rep) => {
@@ -694,7 +692,6 @@ export default function App() {
                                               </div>
                                             </div>
 
-                                            {/* Kotak Input untuk Balas Balasan Tersebut */}
                                             {isReplyBoxOpenForRep && (
                                               <form onSubmit={(e) => handleReplySubmit(item.id, cmt.id, rep.id, e)} style={{ display: 'flex', gap: '6px', paddingLeft: '15px', marginTop: '2px' }}>
                                                 <input 
