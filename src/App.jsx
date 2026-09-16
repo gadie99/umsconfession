@@ -742,7 +742,7 @@ export default function App() {
           </div>
         </div>
       ) : activeTab === 'home' ? (
-        /* HOME PAGE YANG DIKEMASKINI DENGAN SEKSYEN TAMBAHAN */
+        /* HOME PAGE */
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           
           {/* Kad Utama Pengenalan */}
@@ -782,7 +782,7 @@ export default function App() {
             </h1>
 
             <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.7', maxWidth: '500px', margin: '0 auto 25px auto', fontWeight: '500' }}>
-              Gerbang digital eksklusif warga Universiti Malaysia Sabah. Suarakan pandangan dan urus pergerakan kampus anda dengan mudah.
+              Gerbang digital eksklusif warga Universiti Malaysia Sabah. 
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -896,7 +896,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* PINTAS PANTAIS / QUICK LINKS */}
+          {/* PINTAS PANTAIS / QUICK LINKS (Kalendar Akademik telah dibuang) */}
           <div style={{ marginBottom: '30px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: '0 0 14px 0' }}>⚡ Pintas Pantas Kampus</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px' }}>
@@ -923,23 +923,13 @@ export default function App() {
                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Kongsi cerita kampus secara anonim</span>
               </div>
 
-              <div 
-                onClick={() => alert("Sila rujuk portal rasmi UMS untuk jadual akademik terkini.")}
-                className="quick-link-card"
-                style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s ease' }}
-              >
-                <span style={{ fontSize: '16px', display: 'block', marginBottom: '4px' }}>📅</span>
-                <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', display: 'block' }}>Kalendar Akademik</span>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Rujukan minggu kuliah & cuti sem</span>
-              </div>
-
             </div>
           </div>
 
           {/* FOOTER INTERAKTIF */}
           <footer style={{ textAlign: 'center', padding: '20px 0 10px 0', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '12px', fontWeight: '600' }}>
             <p style={{ margin: '0 0 6px 0' }}>UMS HUB CONFESSION &copy; 2026 • Platform Komuniti Pelajar UMS Sabah</p>
-            <p style={{ margin: 0, fontSize: '11px' }}>Dibangunkan khas dengan semangat perpaduan mahasiswa Kota Kinabalu, Sandakan & Labuan.</p>
+            <p style={{ margin: 0, fontSize: '11px' }}>Dibangunkan khas dengan semangat perpaduan mahasiswa.</p>
           </footer>
 
         </div>
