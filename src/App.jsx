@@ -376,15 +376,15 @@ export default function App() {
         gap: '10px',
         flexWrap: 'wrap'
       }}>
-        {/* LOGO DENGAN WARNA TEMA UMS (BIRU & KUNING EMAS) */}
+        {/* LOGO KOTAK DENGAN TULISAN "UMS" & WARNA RASMI */}
         <div 
           onClick={handleLogoClick}
           style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
           title="Klik 3 kali untuk panel admin"
         >
           <div style={{ 
-            width: '32px', 
             height: '32px', 
+            padding: '0 8px',
             borderRadius: '8px', 
             background: 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)', 
             display: 'flex', 
@@ -392,14 +392,15 @@ export default function App() {
             justifyContent: 'center', 
             color: '#fbbf24', 
             fontWeight: '900', 
-            fontSize: '15px',
+            fontSize: '12px',
+            letterSpacing: '0.5px',
             boxShadow: '0 2px 6px rgba(11, 25, 44, 0.2)',
             border: '1px solid #fbbf24'
           }}>
-            U
+            UMS
           </div>
           <span style={{ fontWeight: '800', fontSize: '13px', letterSpacing: '-0.3px', color: '#0f172a' }}>
-            UMS HUB <span style={{ color: '#e11d48' }}>CONFESSION</span>
+             HUB <span style={{ color: '#e11d48' }}>CONFESSION</span>
           </span>
         </div>
 
