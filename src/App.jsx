@@ -365,7 +365,7 @@ export default function App() {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        padding: '12px 24px', 
+        padding: '12px 20px', 
         backgroundColor: 'rgba(255, 255, 255, 0.85)', 
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
@@ -373,7 +373,7 @@ export default function App() {
         top: 0,
         zIndex: 100,
         boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-        gap: '12px',
+        gap: '10px',
         flexWrap: 'wrap'
       }}>
         {/* LOGO */}
@@ -382,16 +382,16 @@ export default function App() {
           style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
           title="Klik 3 kali untuk panel admin"
         >
-          <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 2px 6px rgba(15,23,42,0.2)' }}>
+          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>
             U
           </div>
-          <span style={{ fontWeight: '800', fontSize: '14px', letterSpacing: '-0.3px', color: '#0f172a' }}>
+          <span style={{ fontWeight: '800', fontSize: '13px', letterSpacing: '-0.3px', color: '#0f172a' }}>
             UMS HUB <span style={{ color: '#e11d48' }}>CONFESSION</span>
           </span>
         </div>
 
         {/* MENU TABS (Gaya Pill Terapung) */}
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '14px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '12px', flexWrap: 'wrap' }}>
           <button 
             onClick={() => setActiveTab('home')}
             style={{ 
@@ -399,11 +399,11 @@ export default function App() {
               border: 'none', 
               cursor: 'pointer', 
               fontWeight: activeTab === 'home' ? '700' : '600', 
-              fontSize: '12px', 
+              fontSize: '11px', 
               color: activeTab === 'home' ? '#0f172a' : '#64748b',
-              padding: '6px 14px', 
-              borderRadius: '10px',
-              boxShadow: activeTab === 'home' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+              padding: '5px 10px', 
+              borderRadius: '9px',
+              boxShadow: activeTab === 'home' ? '0 2px 6px rgba(0,0,0,0.05)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
@@ -416,11 +416,11 @@ export default function App() {
               border: 'none', 
               cursor: 'pointer', 
               fontWeight: activeTab === 'confession' ? '700' : '600', 
-              fontSize: '12px', 
+              fontSize: '11px', 
               color: activeTab === 'confession' ? '#0f172a' : '#64748b',
-              padding: '6px 14px', 
-              borderRadius: '10px',
-              boxShadow: activeTab === 'confession' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+              padding: '5px 10px', 
+              borderRadius: '9px',
+              boxShadow: activeTab === 'confession' ? '0 2px 6px rgba(0,0,0,0.05)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
@@ -433,12 +433,11 @@ export default function App() {
             style={{ 
               textDecoration: 'none', 
               fontWeight: '600', 
-              fontSize: '12px', 
+              fontSize: '11px', 
               color: '#64748b',
-              padding: '6px 12px', 
-              borderRadius: '10px',
-              display: 'inline-block',
-              transition: 'color 0.2s'
+              padding: '5px 10px', 
+              borderRadius: '9px',
+              display: 'inline-block'
             }}
           >
             🚗 E-Hailing ↗
@@ -447,8 +446,8 @@ export default function App() {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
           {isAdmin && (
-            <button onClick={handleLogout} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
-              Keluar Admin
+            <button onClick={handleLogout} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+              Keluar
             </button>
           )}
         </div>
@@ -465,50 +464,60 @@ export default function App() {
         </div>
       )}
 
-      {/* HOME LANDING PAGE TANPA GARISAN SEGI EMPAT YANG KERAS */}
+      {/* HOME LANDING PAGE TANPA GARISAN SEGI EMPAT */}
       {activeTab === 'home' ? (
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 16px', textAlign: 'center', boxSizing: 'border-box' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 16px', textAlign: 'center', boxSizing: 'border-box' }}>
           <div style={{ 
             backgroundColor: '#ffffff', 
-            padding: '50px 30px', 
+            padding: '40px 24px', 
             borderRadius: '28px', 
             border: 'none', 
             boxShadow: '0 20px 40px rgba(15, 23, 42, 0.06)' 
           }}>
             <div style={{ 
-              width: '72px', 
-              height: '72px', 
-              borderRadius: '24px', 
+              width: '64px', 
+              height: '64px', 
+              borderRadius: '20px', 
               backgroundColor: '#fef2f2', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              fontSize: '32px', 
-              margin: '0 auto 20px auto',
+              fontSize: '28px', 
+              margin: '0 auto 16px auto',
               boxShadow: '0 8px 16px rgba(225, 29, 72, 0.08)'
             }}>
               🎓
             </div>
-            <h1 style={{ fontSize: '32px', fontWeight: '900', margin: '0 0 12px 0', color: '#0f172a', letterSpacing: '-0.5px' }}>
-              Selamat Datang ke <span style={{ color: '#e11d48' }}>UMS HUB</span>
+            
+            <h1 style={{ 
+              fontSize: '26px', 
+              fontWeight: '900', 
+              margin: '0 0 12px 0', 
+              color: '#0f172a', 
+              letterSpacing: '-0.5px',
+              lineHeight: '1.3' 
+            }}>
+              Selamat Datang ke <br />
+              <span style={{ color: '#e11d48', fontSize: '30px' }}>UMS HUB</span>
             </h1>
-            <p style={{ color: '#64748b', fontSize: '15px', lineHeight: '1.7', maxWidth: '520px', margin: '0 auto 30px auto', fontWeight: '500' }}>
+
+            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.7', maxWidth: '500px', margin: '0 auto 25px auto', fontWeight: '500' }}>
               Pusat komuniti digital eksklusif untuk warga Universiti Malaysia Sabah. Dapatkan maklumat, berkongsi e-hailing kampus, dan luahkan pandangan secara selamat di sini.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <button 
                 onClick={() => setActiveTab('confession')}
                 style={{ 
                   backgroundColor: '#0f172a', 
                   color: '#ffffff', 
                   border: 'none', 
-                  padding: '14px 28px', 
+                  padding: '12px 24px', 
                   borderRadius: '14px', 
                   fontWeight: '700', 
-                  fontSize: '14px', 
+                  fontSize: '13px', 
                   cursor: 'pointer',
-                  boxShadow: '0 8px 20px rgba(15, 23, 42, 0.2)',
-                  transition: 'transform 0.2s'
+                  boxShadow: '0 8px 20px rgba(15, 23, 42, 0.2)'
                 }}
               >
                 Jelajah Confession 💬
@@ -521,14 +530,13 @@ export default function App() {
                   backgroundColor: '#f8fafc', 
                   color: '#0f172a', 
                   border: '1px solid #e2e8f0', 
-                  padding: '14px 28px', 
+                  padding: '12px 24px', 
                   borderRadius: '14px', 
                   fontWeight: '700', 
-                  fontSize: '14px', 
+                  fontSize: '13px', 
                   cursor: 'pointer', 
                   textDecoration: 'none', 
-                  display: 'inline-block',
-                  transition: 'background-color 0.2s'
+                  display: 'inline-block' 
                 }}
               >
                 E-Hailing UMS 🚗
@@ -794,7 +802,7 @@ export default function App() {
                             value={commentInputs[item.id] || ''}
                             onChange={(e) => setCommentInputs({ ...commentInputs, [item.id]: e.target.value })}
                             placeholder="Write a comment as Anonymous..." 
-                            style={{ flex: '1', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: '#ffffff', color: '#0f172a', boxSizing: 'border-box' }}
+                            style={{ flex: 1, padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: '#ffffff', color: '#0f172a', boxSizing: 'border-box' }}
                           />
                           <button 
                             type="submit" 
