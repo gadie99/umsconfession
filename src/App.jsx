@@ -30,7 +30,8 @@ export default function App() {
   const [activeReplyBox, setActiveReplyBox] = useState({});
   const [replyLoading, setReplyLoading] = useState({});
 
-  const [likedPosts, setLikedPosts] = useState({});
+  // Diubah kepada struktur untuk simpan reaksi pengguna (cth: { confessionId: 'haha' })
+  const [userReactions, setUserReactions] = useState({});
   const [likedComments, setLikedComments] = useState({});
   const [myComments, setMyComments] = useState({});
   const [myConfessions, setMyConfessions] = useState({});
@@ -76,8 +77,8 @@ export default function App() {
       console.error("Ralat real-time confessions: ", error);
     });
 
-    const savedLikes = JSON.parse(localStorage.getItem('likedConfessions') || '{}');
-    setLikedPosts(savedLikes);
+    const savedUserReactions = JSON.parse(localStorage.getItem('userReactions') || '{}');
+    setUserReactions(savedUserReactions);
 
     const savedCommentLikes = JSON.parse(localStorage.getItem('likedComments') || '{}');
     setLikedComments(savedCommentLikes);
@@ -175,7 +176,7 @@ export default function App() {
       const docRef = await addDoc(collection(db, 'confessions'), {
         content: newContent,
         category: category,
-        likes: 0,
+        reactions: { like: 0, haha: 0, laugh: 0, sad: 0, fire: 0 },
         createdAt: serverTimestamp()
       });
 
@@ -192,25 +193,38 @@ export default function App() {
     }
   };
 
-  const handleLike = async (id) => {
-    const isAlreadyLiked = likedPosts[id];
+  // Fungsi baru untuk menguruskan pelbagai reaksi (👍, 😂, 🤣, 😢, 🔥)
+  const handleReaction = async (id, reactionType) => {
+    const currentReaction = userReactions[id];
     try {
       const confessionRef = doc(db, 'confessions', id);
-      await updateDoc(confessionRef, {
-        likes: increment(isAlreadyLiked ? -1 : 1)
-      });
+      const updates = {};
 
-      const updatedLikes = { ...likedPosts };
-      if (isAlreadyLiked) {
-        delete updatedLikes[id];
+      if (currentReaction === reactionType) {
+        // Jika pengguna klik semula reaksi yang sama, buang reaksi tersebut (toggle off)
+        updates[`reactions.${reactionType}`] = increment(-1);
       } else {
-        updatedLikes[id] = true;
+        // Jika pengguna sudah ada reaksi lain sebelum ini, kurangkan yang lama
+        if (currentReaction) {
+          updates[`reactions.${currentReaction}`] = increment(-1);
+        }
+        // Tambah reaksi baru
+        updates[`reactions.${reactionType}`] = increment(1);
       }
 
-      setLikedPosts(updatedLikes);
-      localStorage.setItem('likedConfessions', JSON.stringify(updatedLikes));
+      await updateDoc(confessionRef, updates);
+
+      const updatedUserReactions = { ...userReactions };
+      if (currentReaction === reactionType) {
+        delete updatedUserReactions[id];
+      } else {
+        updatedUserReactions[id] = reactionType;
+      }
+
+      setUserReactions(updatedUserReactions);
+      localStorage.setItem('userReactions', JSON.stringify(updatedUserReactions));
     } catch (error) {
-      console.error("Ralat kemas kini likes: ", error);
+      console.error("Ralat kemas kini reaksi: ", error);
     }
   };
 
@@ -376,9 +390,7 @@ export default function App() {
         gap: '10px',
         flexWrap: 'wrap'
       }}>
-        {/* BAHAGIAN KIRI: LOGO & LOCATION PILL "SABAH" */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {/* LOGO KOTAK DENGAN TULISAN "UMS" & WARNA RASMI */}
           <div 
             onClick={handleLogoClick}
             style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
@@ -406,7 +418,6 @@ export default function App() {
             </span>
           </div>
 
-          {/* LOCATION PILL "SABAH" */}
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -427,7 +438,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* MENU TABS (Gaya Pill Terapung) */}
         <div style={{ display: 'flex', gap: '4px', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '12px', flexWrap: 'wrap' }}>
           <button 
             onClick={() => setActiveTab('home')}
@@ -635,8 +645,9 @@ export default function App() {
                 const badge = getCategoryStyle(item.category);
                 const isCommentsOpen = activeComments[item.id];
                 const isSubmittingComment = commentLoading[item.id];
-                const hasLiked = likedPosts[item.id];
+                const currentReaction = userReactions[item.id];
                 const isMyPost = myConfessions[item.id];
+                const reactions = item.reactions || { like: 0, haha: 0, laugh: 0, sad: 0, fire: 0 };
 
                 return (
                   <div key={item.id} style={{ 
@@ -681,13 +692,42 @@ export default function App() {
                       {item.content}
                     </p>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', fontSize: '13px' }}>
-                      <button 
-                        onClick={() => handleLike(item.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', color: hasLiked ? '#e11d48' : '#0f172a' }}
-                      >
-                        {hasLiked ? '❤️' : '🤍'} {item.likes || 0}
-                      </button>
+                    {/* BAHAGIAN REAKSI PELBAGAI (👍, 😂, 🤣, 😢, 🔥) */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {[
+                          { type: 'like', emoji: '👍' },
+                          { type: 'haha', emoji: '😂' },
+                          { type: 'laugh', emoji: '🤣' },
+                          { type: 'sad', emoji: '😢' },
+                          { type: 'fire', emoji: '🔥' }
+                        ].map((r) => {
+                          const isSelected = currentReaction === r.type;
+                          return (
+                            <button
+                              key={r.type}
+                              onClick={() => handleReaction(item.id, r.type)}
+                              style={{
+                                background: isSelected ? '#e2e8f0' : '#f8fafc',
+                                border: isSelected ? '1.5px solid #0f172a' : '1px solid #e2e8f0',
+                                borderRadius: '20px',
+                                padding: '4px 8px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                color: '#0f172a',
+                                transition: 'all 0.1s ease'
+                              }}
+                            >
+                              <span>{r.emoji}</span>
+                              <span style={{ fontSize: '11px' }}>{reactions[r.type] || 0}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
 
                       <button 
                         onClick={() => setActiveComments({ ...activeComments, [item.id]: !isCommentsOpen })}
