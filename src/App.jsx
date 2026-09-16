@@ -11,7 +11,8 @@ import {
   increment,
   deleteDoc,
   onSnapshot,
-  where 
+  where,
+  getDocs 
 } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 
@@ -22,8 +23,8 @@ export default function App() {
   const [pendingConfessions, setPendingConfessions] = useState([]);
   const [newContent, setNewContent] = useState('');
   const [category, setCategory] = useState('Campus Life');
-  const [imageFile, setImageFile] = useState(null); // State untuk fail gambar
-  const [imagePreview, setImagePreview] = useState(null); // State untuk preview gambar
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   
   const [commentInputs, setCommentInputs] = useState({});
@@ -46,6 +47,9 @@ export default function App() {
 
   const [logoClicks, setLogoClicks] = useState(0);
 
+  // State tambahan untuk Live Counter di Home
+  const [totalConfessionsCount, setTotalConfessionsCount] = useState(0);
+
   const handleLogoClick = () => {
     const newCount = logoClicks + 1;
     setLogoClicks(newCount);
@@ -65,11 +69,10 @@ export default function App() {
     }
   };
 
-  // Fungsi untuk handle pilihan gambar & papar preview
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 1048576) { // Hadkan saiz sekitar 1MB untuk prestasi optimum
+      if (file.size > 1048576) {
         alert("Saiz fail terlalu besar. Sila pilih gambar di bawah 1MB.");
         return;
       }
@@ -82,7 +85,7 @@ export default function App() {
     }
   };
 
-  // 1. Fetch Confessions yang sudah diluluskan (Untuk Feed Awam)
+  // 1. Fetch Confessions yang sudah diluluskan
   useEffect(() => {
     const q = query(
       collection(db, 'confessions'), 
@@ -98,6 +101,7 @@ export default function App() {
       }));
 
       setConfessions(confessionsData);
+      setTotalConfessionsCount(snapshot.size);
     }, (error) => {
       console.error("Ralat real-time confessions: ", error);
     });
@@ -128,7 +132,7 @@ export default function App() {
     };
   }, []);
 
-  // 2. Fetch Confessions yang masih 'pending' (Khusus untuk Admin)
+  // 2. Fetch Pending Confessions (Admin)
   useEffect(() => {
     if (!isAdmin) {
       setPendingConfessions([]);
@@ -218,7 +222,6 @@ export default function App() {
     };
   }, [confessions.map(c => c.comments?.length).join('-')]);
 
-  // Hantar Confession Baru (Status diletakkan sebagai 'pending')
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newContent.trim() && !imagePreview) return;
@@ -230,7 +233,7 @@ export default function App() {
         category: category,
         imageUrl: imagePreview || null, 
         reactions: { like: 0, haha: 0, laugh: 0, sad: 0, fire: 0 },
-        status: 'pending', // Menunggu kelulusan admin
+        status: 'pending',
         createdAt: serverTimestamp()
       });
 
@@ -250,7 +253,6 @@ export default function App() {
     }
   };
 
-  // Admin Luluskan Confession
   const handleApproveConfession = async (id) => {
     try {
       const confessionRef = doc(db, 'confessions', id);
@@ -440,7 +442,6 @@ export default function App() {
       boxSizing: 'border-box'
     }}>
       
-      {/* GLOBAL CSS STYLES */}
       <style>{`
         .nav-button {
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -480,6 +481,11 @@ export default function App() {
           transform: translateY(-2px);
           background-color: #f1f5f9 !important;
           border-color: #94a3b8 !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.06) !important;
+        }
+        .quick-link-card:hover {
+          transform: translateY(-2px);
+          border-color: #0f172a !important;
           box-shadow: 0 6px 16px rgba(0,0,0,0.06) !important;
         }
       `}</style>
@@ -675,7 +681,7 @@ export default function App() {
         </div>
       )}
 
-      {/* PANEL ADMIN (TAB KHAS KELULUSAN) */}
+      {/* PANEL ADMIN */}
       {activeTab === 'admin' && isAdmin ? (
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           <div style={{ marginBottom: '20px' }}>
@@ -736,13 +742,17 @@ export default function App() {
           </div>
         </div>
       ) : activeTab === 'home' ? (
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 16px', textAlign: 'center', boxSizing: 'border-box' }}>
+        /* HOME PAGE YANG DIKEMASKINI DENGAN SEKSYEN TAMBAHAN */
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
+          
+          {/* Kad Utama Pengenalan */}
           <div style={{ 
             backgroundColor: '#ffffff', 
             padding: '40px 24px', 
             borderRadius: '28px', 
-            border: 'none', 
-            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.06)' 
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.06)',
+            marginBottom: '30px'
           }}>
             <div style={{ 
               width: '64px', 
@@ -772,7 +782,7 @@ export default function App() {
             </h1>
 
             <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.7', maxWidth: '500px', margin: '0 auto 25px auto', fontWeight: '500' }}>
-              Gerbang digital eksklusif warga Universiti Malaysia Sabah.
+              Gerbang digital eksklusif warga Universiti Malaysia Sabah. Suarakan pandangan dan urus pergerakan kampus anda dengan mudah.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -816,9 +826,125 @@ export default function App() {
               </a>
             </div>
           </div>
+
+          {/* STATISTIK LANGSUNG (LIVE COUNTER) */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '14px', 
+            marginBottom: '30px' 
+          }}>
+            <div style={{ backgroundColor: '#ffffff', padding: '18px', borderRadius: '16px', border: '1px solid #e2e8f0', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+              <span style={{ fontSize: '24px', fontWeight: '900', color: '#e11d48', display: 'block', marginBottom: '4px' }}>{totalConfessionsCount}</span>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Confession Disiarkan</span>
+            </div>
+            <div style={{ backgroundColor: '#ffffff', padding: '18px', borderRadius: '16px', border: '1px solid #e2e8f0', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+              <span style={{ fontSize: '24px', fontWeight: '900', color: '#16a34a', display: 'block', marginBottom: '4px' }}>UMS Sabah</span>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Komuniti Kampus Utama</span>
+            </div>
+          </div>
+
+          {/* BAHAGIAN CONFESSION TERKINI (PREVIEW 3 TERATAS) */}
+          <div style={{ marginBottom: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: 0 }}>🔥 Confession Terkini</h3>
+              <button 
+                onClick={() => setActiveTab('confession')}
+                style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: '800', fontSize: '12px', cursor: 'pointer' }}
+              >
+                Lihat Semua →
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {confessions.slice(0, 3).length === 0 ? (
+                <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '14px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: 0, fontWeight: '600' }}>Belum ada confession tersedia.</p>
+                </div>
+              ) : (
+                confessions.slice(0, 3).map((item) => {
+                  const badge = getCategoryStyle(item.category);
+                  return (
+                    <div 
+                      key={item.id} 
+                      onClick={() => setActiveTab('confession')}
+                      style={{ 
+                        backgroundColor: '#ffffff', 
+                        padding: '14px 16px', 
+                        borderRadius: '14px', 
+                        border: '1px solid #e2e8f0', 
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, padding: '2px 8px', borderRadius: '10px', fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>
+                          {item.category || 'Campus Life'}
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600' }}>
+                          {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' }) : 'Baru'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '13px', color: '#0f172a', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontWeight: '500', lineHeight: '1.4' }}>
+                        {item.content}
+                      </p>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* PINTAS PANTAIS / QUICK LINKS */}
+          <div style={{ marginBottom: '30px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: '0 0 14px 0' }}>⚡ Pintas Pantas Kampus</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px' }}>
+              
+              <a 
+                href="https://ehailingumsapp.netlify.app" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="quick-link-card"
+                style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', textDecoration: 'none', display: 'block', transition: 'all 0.2s ease' }}
+              >
+                <span style={{ fontSize: '16px', display: 'block', marginBottom: '4px' }}>🚗</span>
+                <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', display: 'block' }}>E-Hailing UMS</span>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Tempahan & info pengangkutan pelajar</span>
+              </a>
+
+              <div 
+                onClick={() => setActiveTab('confession')}
+                className="quick-link-card"
+                style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s ease' }}
+              >
+                <span style={{ fontSize: '16px', display: 'block', marginBottom: '4px' }}>💬</span>
+                <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', display: 'block' }}>Hantar Luahan</span>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Kongsi cerita kampus secara anonim</span>
+              </div>
+
+              <div 
+                onClick={() => alert("Sila rujuk portal rasmi UMS untuk jadual akademik terkini.")}
+                className="quick-link-card"
+                style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s ease' }}
+              >
+                <span style={{ fontSize: '16px', display: 'block', marginBottom: '4px' }}>📅</span>
+                <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', display: 'block' }}>Kalendar Akademik</span>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Rujukan minggu kuliah & cuti sem</span>
+              </div>
+
+            </div>
+          </div>
+
+          {/* FOOTER INTERAKTIF */}
+          <footer style={{ textAlign: 'center', padding: '20px 0 10px 0', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '12px', fontWeight: '600' }}>
+            <p style={{ margin: '0 0 6px 0' }}>UMS HUB CONFESSION &copy; 2026 • Platform Komuniti Pelajar UMS Sabah</p>
+            <p style={{ margin: 0, fontSize: '11px' }}>Dibangunkan khas dengan semangat perpaduan mahasiswa Kota Kinabalu, Sandakan & Labuan.</p>
+          </footer>
+
         </div>
       ) : (
-        /* CONFESSIONS PAGE (DIHADKAN KEPADA 720px DI PC UNTUK KEMAS) */
+        /* CONFESSIONS PAGE */
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           
           <div style={{ marginBottom: '20px' }}>
@@ -826,7 +952,6 @@ export default function App() {
             <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>UMS Sabah • Share, connect, explore safely</p>
           </div>
 
-          {/* FORM POST CONFESSION DENGAN INPUT GAMBAR */}
           <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', padding: '14px 18px', borderRadius: '16px', marginBottom: '25px', border: '2px solid #0f172a', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>Pilih kategori luahan anda:</span>
@@ -850,7 +975,6 @@ export default function App() {
               style={{ width: '100%', padding: '8px 0', border: 'none', borderBottom: '1px solid #f1f5f9', outline: 'none', resize: 'vertical', fontSize: '14px', boxSizing: 'border-box', fontFamily: 'inherit', backgroundColor: '#ffffff', color: '#0f172a' }}
             />
 
-            {/* PREVIEW GAMBAR JIKA DIPILIH */}
             {imagePreview && (
               <div style={{ position: 'relative', marginTop: '10px', display: 'inline-block' }}>
                 <img src={imagePreview} alt="Preview" style={{ maxHeight: '120px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
@@ -865,7 +989,6 @@ export default function App() {
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-              {/* BUTANG UPLOAD GAMBAR */}
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: '#475569', backgroundColor: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                 <span>📷 Upload Gambar</span>
                 <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
@@ -881,7 +1004,6 @@ export default function App() {
             </div>
           </form>
 
-          {/* SENARAI CONFESSIONS YANG DILULUSKAN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {confessions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
@@ -939,7 +1061,6 @@ export default function App() {
                       {item.content}
                     </p>
 
-                    {/* PAPARAN GAMBAR JIKA ADA PADA POSTING */}
                     {item.imageUrl && (
                       <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', textAlign: 'center' }}>
                         <img src={item.imageUrl} alt="Confession attachment" style={{ maxWidth: '100%', maxHeight: '350px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
