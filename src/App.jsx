@@ -30,7 +30,6 @@ export default function App() {
   const [activeReplyBox, setActiveReplyBox] = useState({});
   const [replyLoading, setReplyLoading] = useState({});
 
-  // Diubah kepada struktur untuk simpan reaksi pengguna (cth: { confessionId: 'haha' })
   const [userReactions, setUserReactions] = useState({});
   const [likedComments, setLikedComments] = useState({});
   const [myComments, setMyComments] = useState({});
@@ -193,7 +192,6 @@ export default function App() {
     }
   };
 
-  // Fungsi baru untuk menguruskan pelbagai reaksi (👍, 😂, 🤣, 😢, 🔥)
   const handleReaction = async (id, reactionType) => {
     const currentReaction = userReactions[id];
     try {
@@ -201,14 +199,11 @@ export default function App() {
       const updates = {};
 
       if (currentReaction === reactionType) {
-        // Jika pengguna klik semula reaksi yang sama, buang reaksi tersebut (toggle off)
         updates[`reactions.${reactionType}`] = increment(-1);
       } else {
-        // Jika pengguna sudah ada reaksi lain sebelum ini, kurangkan yang lama
         if (currentReaction) {
           updates[`reactions.${currentReaction}`] = increment(-1);
         }
-        // Tambah reaksi baru
         updates[`reactions.${reactionType}`] = increment(1);
       }
 
@@ -374,126 +369,197 @@ export default function App() {
       boxSizing: 'border-box'
     }}>
       
-      {/* NAVBAR MODEN & MENARIK */}
+      {/* GLOBAL CSS STYLES UNTUK HOVER TRANSITION */}
+      <style>{`
+        .nav-button {
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-button:hover {
+          transform: translateY(-2px);
+          background-color: #cbd5e1 !important;
+          color: #0f172a !important;
+        }
+        .nav-button-active:hover {
+          transform: translateY(-2px);
+          opacity: 0.95;
+        }
+        .nav-external:hover {
+          transform: translateY(-2px);
+          background-color: #f1f5f9 !important;
+          border-color: #94a3b8 !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+        }
+        .location-pill:hover {
+          transform: translateY(-1px);
+          border-color: #94a3b8 !important;
+          background-color: #f8fafc !important;
+        }
+        /* Tambahan CSS untuk Butang Home Page */
+        .home-primary-btn {
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .home-primary-btn:hover {
+          transform: translateY(-2px);
+          background-color: #1e293b !important;
+          box-shadow: 0 10px 24px rgba(15, 23, 42, 0.3) !important;
+        }
+        .home-secondary-btn {
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .home-secondary-btn:hover {
+          transform: translateY(-2px);
+          background-color: #f1f5f9 !important;
+          border-color: #94a3b8 !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.06) !important;
+        }
+      `}</style>
+
+      {/* NAVBAR DENGAN EFEK TRANSISI HOVER */}
       <nav style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        padding: '12px 20px', 
-        backgroundColor: 'rgba(255, 255, 255, 0.85)', 
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+        padding: '16px 24px', 
+        backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+        backdropFilter: 'blur(12px)',
+        borderBottom: '2px solid #e2e8f0',
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-        gap: '10px',
+        boxShadow: '0 6px 25px rgba(11, 25, 44, 0.06)',
+        gap: '15px',
         flexWrap: 'wrap'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        {/* BAHAGIAN KIRI: LOGO & LOCATION PILL */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <div 
             onClick={handleLogoClick}
-            style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}
             title="Klik 3 kali untuk panel admin"
           >
             <div style={{ 
-              height: '32px', 
-              padding: '0 8px',
-              borderRadius: '8px', 
+              height: '38px', 
+              padding: '0 12px',
+              borderRadius: '10px', 
               background: 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               color: '#fbbf24', 
               fontWeight: '900', 
-              fontSize: '12px',
-              letterSpacing: '0.5px',
-              boxShadow: '0 2px 6px rgba(11, 25, 44, 0.2)',
-              border: '1px solid #fbbf24'
+              fontSize: '14px',
+              letterSpacing: '0.8px',
+              boxShadow: '0 4px 10px rgba(11, 25, 44, 0.25)',
+              border: '1.5px solid #fbbf24'
             }}>
               UMS
             </div>
-            <span style={{ fontWeight: '800', fontSize: '13px', letterSpacing: '-0.3px', color: '#0f172a' }}>
+            <span style={{ fontWeight: '900', fontSize: '15px', letterSpacing: '-0.3px', color: '#0f172a' }}>
                HUB <span style={{ color: '#e11d48' }}>CONFESSION</span>
             </span>
           </div>
 
-          <div style={{ 
+          {/* LOCATION PILL DENGAN TRANSISI */}
+          <div className="location-pill" style={{ 
             display: 'flex', 
             alignItems: 'center', 
             gap: '6px', 
-            padding: '4px 10px', 
+            padding: '6px 12px', 
             backgroundColor: '#ffffff', 
-            border: '1px solid #cbd5e1', 
-            borderRadius: '16px', 
-            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+            border: '1.5px solid #cbd5e1', 
+            borderRadius: '20px', 
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
             fontSize: '12px',
-            fontWeight: '700',
+            fontWeight: '800',
             color: '#0f172a',
-            userSelect: 'none'
+            userSelect: 'none',
+            transition: 'all 0.2s ease',
+            cursor: 'default'
           }}>
-            <span style={{ fontSize: '12px', lineHeight: 1 }}>📍</span>
+            <span style={{ fontSize: '13px', lineHeight: 1 }}>📍</span>
             <span>Sabah</span>
-            <span style={{ fontSize: '8px', color: '#64748b', marginLeft: '2px' }}>▼</span>
+            <span style={{ fontSize: '9px', color: '#64748b', marginLeft: '2px' }}>▼</span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '12px', flexWrap: 'wrap' }}>
+        {/* MENU TABS DENGAN EFEK TRANSISI HOVER */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          alignItems: 'center', 
+          backgroundColor: '#e2e8f0', 
+          padding: '5px', 
+          borderRadius: '16px', 
+          flexWrap: 'wrap',
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.04)'
+        }}>
           <button 
             onClick={() => setActiveTab('home')}
+            className={activeTab === 'home' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              background: activeTab === 'home' ? '#ffffff' : 'none', 
+              background: activeTab === 'home' ? 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)' : 'transparent', 
               border: 'none', 
               cursor: 'pointer', 
-              fontWeight: activeTab === 'home' ? '700' : '600', 
-              fontSize: '11px', 
-              color: activeTab === 'home' ? '#0f172a' : '#64748b',
-              padding: '5px 10px', 
-              borderRadius: '9px',
-              boxShadow: activeTab === 'home' ? '0 2px 6px rgba(0,0,0,0.05)' : 'none',
-              transition: 'all 0.2s ease'
+              fontWeight: '800', 
+              fontSize: '13px', 
+              color: activeTab === 'home' ? '#fbbf24' : '#475569',
+              padding: '8px 18px', 
+              borderRadius: '12px',
+              boxShadow: activeTab === 'home' ? '0 4px 12px rgba(11, 25, 44, 0.25)' : 'none',
+              letterSpacing: '0.3px'
             }}
           >
             🏠 Home
           </button>
+
           <button 
             onClick={() => setActiveTab('confession')}
+            className={activeTab === 'confession' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              background: activeTab === 'confession' ? '#ffffff' : 'none', 
+              background: activeTab === 'confession' ? 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)' : 'transparent', 
               border: 'none', 
               cursor: 'pointer', 
-              fontWeight: activeTab === 'confession' ? '700' : '600', 
-              fontSize: '11px', 
-              color: activeTab === 'confession' ? '#0f172a' : '#64748b',
-              padding: '5px 10px', 
-              borderRadius: '9px',
-              boxShadow: activeTab === 'confession' ? '0 2px 6px rgba(0,0,0,0.05)' : 'none',
-              transition: 'all 0.2s ease'
+              fontWeight: '800', 
+              fontSize: '13px', 
+              color: activeTab === 'confession' ? '#fbbf24' : '#475569',
+              padding: '8px 18px', 
+              borderRadius: '12px',
+              boxShadow: activeTab === 'confession' ? '0 4px 12px rgba(11, 25, 44, 0.25)' : 'none',
+              letterSpacing: '0.3px'
             }}
           >
             💬 Confession
           </button>
+
           <a 
             href="https://ehailingumsapp.netlify.app" 
             target="_blank" 
             rel="noopener noreferrer"
+            className="nav-external"
             style={{ 
               textDecoration: 'none', 
-              fontWeight: '600', 
-              fontSize: '11px', 
-              color: '#64748b',
-              padding: '5px 10px', 
-              borderRadius: '9px',
-              display: 'inline-block'
+              fontWeight: '800', 
+              fontSize: '13px', 
+              color: '#0f172a',
+              backgroundColor: '#ffffff',
+              padding: '8px 18px', 
+              borderRadius: '12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+              border: '1px solid #cbd5e1',
+              letterSpacing: '0.3px',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
-            🚗 E-Hailing ↗
+            🚗 E-Hailing <span style={{ fontSize: '11px', color: '#e11d48' }}>↗</span>
           </a>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
           {isAdmin && (
-            <button onClick={handleLogout} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+            <button onClick={handleLogout} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '6px 12px', borderRadius: '10px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
               Keluar
             </button>
           )}
@@ -549,12 +615,14 @@ export default function App() {
             </h1>
 
             <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.7', maxWidth: '500px', margin: '0 auto 25px auto', fontWeight: '500' }}>
-              Pusat komuniti digital eksklusif untuk warga Universiti Malaysia Sabah. Dapatkan maklumat, berkongsi e-hailing kampus, dan luahkan pandangan secara selamat di sini.
+              Gerbang digital eksklusif warga Universiti Malaysia Sabah.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              {/* BUTANG JELAJAH CONFESSION DENGAN HOVER TRANSITION */}
               <button 
                 onClick={() => setActiveTab('confession')}
+                className="home-primary-btn"
                 style={{ 
                   backgroundColor: '#0f172a', 
                   color: '#ffffff', 
@@ -569,10 +637,13 @@ export default function App() {
               >
                 Jelajah Confession 💬
               </button>
+
+              {/* PAUTAN E-HAILING UMS DENGAN HOVER TRANSITION */}
               <a 
                 href="https://ehailingumsapp.netlify.app" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                className="home-secondary-btn"
                 style={{ 
                   backgroundColor: '#f8fafc', 
                   color: '#0f172a', 
@@ -599,7 +670,6 @@ export default function App() {
             <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>UMS Sabah • Share, connect, explore safely</p>
           </div>
 
-          {/* Kotak Menulis Confession */}
           <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', padding: '14px 18px', borderRadius: '16px', marginBottom: '25px', border: '2px solid #0f172a', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>Pilih kategori luahan anda:</span>
@@ -692,7 +762,6 @@ export default function App() {
                       {item.content}
                     </p>
 
-                    {/* BAHAGIAN REAKSI PELBAGAI (👍, 😂, 🤣, 😢, 🔥) */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {[
