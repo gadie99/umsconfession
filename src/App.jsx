@@ -20,6 +20,8 @@ export default function App() {
   const [confessions, setConfessions] = useState([]);
   const [newContent, setNewContent] = useState('');
   const [category, setCategory] = useState('Campus Life');
+  const [imageFile, setImageFile] = useState(null); // State untuk fail gambar
+  const [imagePreview, setImagePreview] = useState(null); // State untuk preview gambar
   const [loading, setLoading] = useState(false);
   
   const [commentInputs, setCommentInputs] = useState({});
@@ -58,6 +60,23 @@ export default function App() {
       case 'Campus Life': return { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' };
       case 'Mental Health': return { bg: '#eef2ff', color: '#4f46e5', border: '#c7d2fe' };
       default: return { bg: '#f8fafc', color: '#475569', border: '#cbd5e1' };
+    }
+  };
+
+  // Fungsi untuk handle pilihan gambar & papar preview
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1048576) { // Hadkan saiz sekitar 1MB untuk prestasi optimum
+        alert("Saiz fail terlalu besar. Sila pilih gambar di bawah 1MB.");
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -168,13 +187,14 @@ export default function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newContent.trim()) return;
+    if (!newContent.trim() && !imagePreview) return;
 
     setLoading(true);
     try {
       const docRef = await addDoc(collection(db, 'confessions'), {
         content: newContent,
         category: category,
+        imageUrl: imagePreview || null, // Simpan imej (Base64) ke dalam Firestore
         reactions: { like: 0, haha: 0, laugh: 0, sad: 0, fire: 0 },
         createdAt: serverTimestamp()
       });
@@ -184,6 +204,8 @@ export default function App() {
       localStorage.setItem('myConfessions', JSON.stringify(updatedMyConfessions));
 
       setNewContent('');
+      setImageFile(null);
+      setImagePreview(null);
     } catch (error) {
       console.error("Ralat menghantar confession: ", error);
       alert("Gagal menghantar confession.");
@@ -369,7 +391,7 @@ export default function App() {
       boxSizing: 'border-box'
     }}>
       
-      {/* GLOBAL CSS STYLES UNTUK HOVER TRANSITION */}
+      {/* GLOBAL CSS STYLES */}
       <style>{`
         .nav-button {
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -394,7 +416,6 @@ export default function App() {
           border-color: #94a3b8 !important;
           background-color: #f8fafc !important;
         }
-        /* Tambahan CSS untuk Butang Home Page */
         .home-primary-btn {
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -414,7 +435,7 @@ export default function App() {
         }
       `}</style>
 
-      {/* NAVBAR DENGAN EFEK TRANSISI HOVER & STRUKTUR MOBILE DIOPTIMUMKAN */}
+      {/* NAVBAR */}
       <nav style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -430,7 +451,6 @@ export default function App() {
         gap: '10px',
         flexWrap: 'wrap'
       }}>
-        {/* BARIS ATAS: LOGO, LOCATION PILL & ADMIN LOGOUT */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '100%' }}>
           <div 
             onClick={handleLogoClick}
@@ -460,7 +480,6 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* LOCATION PILL DENGAN TRANSISI */}
             <div className="location-pill" style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -490,7 +509,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* BARIS BAWAH: MENU TABS TERSUSUN SAMA RATA */}
         <div style={{ 
           display: 'flex', 
           gap: '6px', 
@@ -627,7 +645,6 @@ export default function App() {
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              {/* BUTANG JELAJAH CONFESSION DENGAN HOVER TRANSITION */}
               <button 
                 onClick={() => setActiveTab('confession')}
                 className="home-primary-btn"
@@ -646,7 +663,6 @@ export default function App() {
                  Confession 💬
               </button>
 
-              {/* PAUTAN E-HAILING UMS DENGAN HOVER TRANSITION */}
               <a 
                 href="https://ehailingumsapp.netlify.app" 
                 target="_blank" 
@@ -671,6 +687,7 @@ export default function App() {
           </div>
         </div>
       ) : (
+        /* CONFESSIONS PAGE (DIHADKAN KEPADA 720px DI PC UNTUK KEMAS) */
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           
           <div style={{ marginBottom: '20px' }}>
@@ -678,6 +695,7 @@ export default function App() {
             <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>UMS Sabah • Share, connect, explore safely</p>
           </div>
 
+          {/* FORM POST CONFESSION DENGAN INPUT GAMBAR */}
           <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', padding: '14px 18px', borderRadius: '16px', marginBottom: '25px', border: '2px solid #0f172a', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>Pilih kategori luahan anda:</span>
@@ -699,10 +717,29 @@ export default function App() {
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="What's on your mind? Share your confession..." 
               style={{ width: '100%', padding: '8px 0', border: 'none', borderBottom: '1px solid #f1f5f9', outline: 'none', resize: 'vertical', fontSize: '14px', boxSizing: 'border-box', fontFamily: 'inherit', backgroundColor: '#ffffff', color: '#0f172a' }}
-              required
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+            {/* PREVIEW GAMBAR JIKA DIPILIH */}
+            {imagePreview && (
+              <div style={{ position: 'relative', marginTop: '10px', display: 'inline-block' }}>
+                <img src={imagePreview} alt="Preview" style={{ maxHeight: '120px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                <button 
+                  type="button" 
+                  onClick={() => { setImageFile(null); setImagePreview(null); }}
+                  style={{ position: 'absolute', top: '4px', right: '4px', backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+              {/* BUTANG UPLOAD GAMBAR */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: '#475569', backgroundColor: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                <span>📷 Upload Gambar</span>
+                <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+              </label>
+
               <button 
                 type="submit" 
                 disabled={loading}
@@ -713,6 +750,7 @@ export default function App() {
             </div>
           </form>
 
+          {/* SENARAI CONFESSIONS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {confessions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
@@ -766,9 +804,16 @@ export default function App() {
                       </div>
                     </div>
 
-                    <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#0f172a', lineHeight: '1.6', fontSize: '14px', marginBottom: '16px', marginTop: 0, fontWeight: '500' }}>
+                    <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#0f172a', lineHeight: '1.6', fontSize: '14px', marginBottom: item.imageUrl ? '12px' : '16px', marginTop: 0, fontWeight: '500' }}>
                       {item.content}
                     </p>
+
+                    {/* PAPARAN GAMBAR JIKA ADA PADA POSTING */}
+                    {item.imageUrl && (
+                      <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', textAlign: 'center' }}>
+                        <img src={item.imageUrl} alt="Confession attachment" style={{ maxWidth: '100%', maxHeight: '350px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                      </div>
+                    )}
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -786,7 +831,7 @@ export default function App() {
                               onClick={() => handleReaction(item.id, r.type)}
                               style={{
                                 background: isSelected ? '#e2e8f0' : '#f8fafc',
-                                border: isSelected ? '1.5px solid #0f172a' : '1px solid #e2e8f0',
+                                border: isSelected ? '1.5px solid #0f172a' : '1.5px solid #e2e8f0',
                                 borderRadius: '20px',
                                 padding: '4px 8px',
                                 cursor: 'pointer',
