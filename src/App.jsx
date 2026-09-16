@@ -939,7 +939,7 @@ export default function App() {
           
           <div style={{ marginBottom: '20px' }}>
             <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 4px 0', letterSpacing: '-0.5px', color: '#0f172a' }}>Students Confessions</h2>
-            <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>UMS Sabah • Share, connect, explore safely</p>
+            <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>Universiti Malaysia Sabah • Share, connect, explore safely</p>
           </div>
 
           <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', padding: '14px 18px', borderRadius: '16px', marginBottom: '25px', border: '2px solid #0f172a', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
