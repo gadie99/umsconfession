@@ -402,7 +402,7 @@ export default function App() {
               UMS
             </div>
             <span style={{ fontWeight: '800', fontSize: '13px', letterSpacing: '-0.3px', color: '#0f172a' }}>
-              UMS HUB <span style={{ color: '#e11d48' }}>CONFESSION</span>
+               HUB <span style={{ color: '#e11d48' }}>CONFESSION</span>
             </span>
           </div>
 
