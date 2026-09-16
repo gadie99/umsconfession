@@ -460,7 +460,7 @@ export default function App() {
                 onClick={() => setActiveTab('confession')}
                 style={{ backgroundColor: '#0f172a', color: '#ffffff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}
               >
-                Jelajah Confession 💬
+                 Confession 💬
               </button>
               <a 
                 href="https://ehailingumsapp.netlify.app" 
