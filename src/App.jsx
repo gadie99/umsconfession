@@ -376,13 +376,26 @@ export default function App() {
         gap: '10px',
         flexWrap: 'wrap'
       }}>
-        {/* LOGO */}
+        {/* LOGO DENGAN WARNA TEMA UMS (BIRU & KUNING EMAS) */}
         <div 
           onClick={handleLogoClick}
           style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
           title="Klik 3 kali untuk panel admin"
         >
-          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>
+          <div style={{ 
+            width: '32px', 
+            height: '32px', 
+            borderRadius: '8px', 
+            background: 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            color: '#fbbf24', 
+            fontWeight: '900', 
+            fontSize: '15px',
+            boxShadow: '0 2px 6px rgba(11, 25, 44, 0.2)',
+            border: '1px solid #fbbf24'
+          }}>
             U
           </div>
           <span style={{ fontWeight: '800', fontSize: '13px', letterSpacing: '-0.3px', color: '#0f172a' }}>
@@ -464,7 +477,7 @@ export default function App() {
         </div>
       )}
 
-      {/* HOME LANDING PAGE TANPA GARISAN SEGI EMPAT */}
+      {/* HOME LANDING PAGE */}
       {activeTab === 'home' ? (
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 16px', textAlign: 'center', boxSizing: 'border-box' }}>
           <div style={{ 
