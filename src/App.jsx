@@ -10,7 +10,8 @@ import {
   doc, 
   increment,
   deleteDoc,
-  onSnapshot 
+  onSnapshot,
+  where 
 } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 
@@ -18,6 +19,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
 
   const [confessions, setConfessions] = useState([]);
+  const [pendingConfessions, setPendingConfessions] = useState([]);
   const [newContent, setNewContent] = useState('');
   const [category, setCategory] = useState('Campus Life');
   const [imageFile, setImageFile] = useState(null); // State untuk fail gambar
@@ -80,8 +82,13 @@ export default function App() {
     }
   };
 
+  // 1. Fetch Confessions yang sudah diluluskan (Untuk Feed Awam)
   useEffect(() => {
-    const q = query(collection(db, 'confessions'), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, 'confessions'), 
+      where('status', '==', 'approved'),
+      orderBy('createdAt', 'desc')
+    );
     
     const unsubscribeConfessions = onSnapshot(q, (snapshot) => {
       const confessionsData = snapshot.docs.map(docSnap => ({
@@ -120,6 +127,32 @@ export default function App() {
       unsubscribeConfessions();
     };
   }, []);
+
+  // 2. Fetch Confessions yang masih 'pending' (Khusus untuk Admin)
+  useEffect(() => {
+    if (!isAdmin) {
+      setPendingConfessions([]);
+      return;
+    }
+
+    const qPending = query(
+      collection(db, 'confessions'), 
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubPending = onSnapshot(qPending, (snapshot) => {
+      const pendingData = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+      setPendingConfessions(pendingData);
+    }, (error) => {
+      console.error("Ralat pending confessions: ", error);
+    });
+
+    return () => unsubPending();
+  }, [isAdmin]);
 
   useEffect(() => {
     if (confessions.length === 0) return;
@@ -185,6 +218,7 @@ export default function App() {
     };
   }, [confessions.map(c => c.comments?.length).join('-')]);
 
+  // Hantar Confession Baru (Status diletakkan sebagai 'pending')
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newContent.trim() && !imagePreview) return;
@@ -194,8 +228,9 @@ export default function App() {
       const docRef = await addDoc(collection(db, 'confessions'), {
         content: newContent,
         category: category,
-        imageUrl: imagePreview || null, // Simpan imej (Base64) ke dalam Firestore
+        imageUrl: imagePreview || null, 
         reactions: { like: 0, haha: 0, laugh: 0, sad: 0, fire: 0 },
+        status: 'pending', // Menunggu kelulusan admin
         createdAt: serverTimestamp()
       });
 
@@ -206,11 +241,24 @@ export default function App() {
       setNewContent('');
       setImageFile(null);
       setImagePreview(null);
+      alert("Confession berjaya dihantar! Ia akan dipaparkan setelah diluluskan oleh Admin.");
     } catch (error) {
       console.error("Ralat menghantar confession: ", error);
       alert("Gagal menghantar confession.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Admin Luluskan Confession
+  const handleApproveConfession = async (id) => {
+    try {
+      const confessionRef = doc(db, 'confessions', id);
+      await updateDoc(confessionRef, { status: 'approved' });
+      alert("Confession telah diluluskan dan kini dipaparkan di feed.");
+    } catch (error) {
+      console.error("Ralat meluluskan confession:", error);
+      alert("Gagal meluluskan confession.");
     }
   };
 
@@ -379,6 +427,7 @@ export default function App() {
 
   const handleLogout = async () => {
     await signOut(auth);
+    setActiveTab('home');
     alert("Telah log keluar.");
   };
 
@@ -562,6 +611,29 @@ export default function App() {
             💬 Confession
           </button>
 
+          {isAdmin && (
+            <button 
+              onClick={() => setActiveTab('admin')}
+              className={activeTab === 'admin' ? 'nav-button-active' : 'nav-button'}
+              style={{ 
+                flex: 1,
+                background: activeTab === 'admin' ? 'linear-gradient(135deg, #e11d48 0%, #9f1239 100%)' : 'transparent', 
+                border: 'none', 
+                cursor: 'pointer', 
+                fontWeight: '800', 
+                fontSize: '12px', 
+                color: activeTab === 'admin' ? '#ffffff' : '#475569',
+                padding: '8px 10px', 
+                borderRadius: '10px',
+                boxShadow: activeTab === 'admin' ? '0 4px 12px rgba(225, 29, 72, 0.3)' : 'none',
+                letterSpacing: '0.3px',
+                textAlign: 'center'
+              }}
+            >
+              🛡️ Admin {pendingConfessions.length > 0 && `(${pendingConfessions.length})`}
+            </button>
+          )}
+
           <a 
             href="https://ehailingumsapp.netlify.app" 
             target="_blank" 
@@ -595,7 +667,7 @@ export default function App() {
       {showLogin && (
         <div style={{ maxWidth: '400px', margin: '20px auto', padding: '15px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#0f172a' }}>Log Masuk Admin (Hidden)</span>
+            <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#0f172a' }}>Log Masuk Admin</span>
             <input type="email" placeholder="Emel" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }} />
             <input type="password" placeholder="Katalaluan" value={password} onChange={e => setPassword(e.target.value)} required style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }} />
             <button type="submit" style={{ backgroundColor: '#0f172a', color: '#ffffff', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Masuk</button>
@@ -603,8 +675,67 @@ export default function App() {
         </div>
       )}
 
-      {/* HOME LANDING PAGE */}
-      {activeTab === 'home' ? (
+      {/* PANEL ADMIN (TAB KHAS KELULUSAN) */}
+      {activeTab === 'admin' && isAdmin ? (
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>🛡️ Senarai Menunggu Kelulusan</h2>
+            <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>Hantaran di bawah memerlukan kelulusan anda sebelum disiarkan kepada umum.</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {pendingConfessions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Tiada confession yang menunggu kelulusan.</p>
+              </div>
+            ) : (
+              pendingConfessions.map((item) => {
+                const badge = getCategoryStyle(item.category);
+                return (
+                  <div key={item.id} style={{ 
+                    backgroundColor: '#ffffff', border: '2px solid #e11d48', borderRadius: '16px', padding: '18px', 
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.02)', position: 'relative', boxSizing: 'border-box'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, padding: '3px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase' }}>
+                        {item.category || 'Campus Life'}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#475569', fontWeight: '600' }}>
+                        {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Baru saja'}
+                      </span>
+                    </div>
+
+                    <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#0f172a', lineHeight: '1.6', fontSize: '14px', marginBottom: item.imageUrl ? '12px' : '16px', marginTop: 0, fontWeight: '500' }}>
+                      {item.content}
+                    </p>
+
+                    {item.imageUrl && (
+                      <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', textAlign: 'center' }}>
+                        <img src={item.imageUrl} alt="Pending attachment" style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                      <button 
+                        onClick={() => handleDeleteConfession(item.id)}
+                        style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                      >
+                        Tolak / Padam
+                      </button>
+                      <button 
+                        onClick={() => handleApproveConfession(item.id)}
+                        style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                      >
+                        ✅ Luluskan (Publish)
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      ) : activeTab === 'home' ? (
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 16px', textAlign: 'center', boxSizing: 'border-box' }}>
           <div style={{ 
             backgroundColor: '#ffffff', 
@@ -750,11 +881,11 @@ export default function App() {
             </div>
           </form>
 
-          {/* SENARAI CONFESSIONS */}
+          {/* SENARAI CONFESSIONS YANG DILULUSKAN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {confessions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Belum ada confession lagi. Jadilah yang pertama!</p>
+                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Belum ada confession yang diluluskan lagi. Jadilah yang pertama!</p>
               </div>
             ) : (
               confessions.map((item) => {
