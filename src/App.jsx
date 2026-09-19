@@ -46,9 +46,33 @@ export default function App() {
   const [password, setPassword] = useState('');
 
   const [logoClicks, setLogoClicks] = useState(0);
-
-  // State tambahan untuk Live Counter di Home
   const [totalConfessionsCount, setTotalConfessionsCount] = useState(0);
+  
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleLogoClick = () => {
     const newCount = logoClicks + 1;
@@ -85,7 +109,6 @@ export default function App() {
     }
   };
 
-  // 1. Fetch Confessions yang sudah diluluskan
   useEffect(() => {
     const q = query(
       collection(db, 'confessions'), 
@@ -132,7 +155,6 @@ export default function App() {
     };
   }, []);
 
-  // 2. Fetch Pending Confessions (Admin)
   useEffect(() => {
     if (!isAdmin) {
       setPendingConfessions([]);
@@ -439,32 +461,63 @@ export default function App() {
       backgroundColor: '#fbf9f1', 
       color: '#0f172a', 
       fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      scrollBehavior: 'smooth'
     }}>
       
       <style>{`
+        @keyframes fadeInSlide {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .fade-in-card {
+          animation: fadeInSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
         .nav-button {
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          background-color: transparent;
+          flex: 1 1 0% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
         }
         .nav-button:hover {
           transform: translateY(-2px);
-          background-color: #cbd5e1 !important;
+          background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+          color: #15803d !important;
+          box-shadow: 0 6px 16px rgba(22, 163, 74, 0.15) !important;
+          border-color: transparent !important;
+        }
+
+        .nav-button-active {
+          background-color: transparent !important;
           color: #0f172a !important;
+          font-weight: 900 !important;
+          border: none !important;
+          box-shadow: none !important;
+          flex: 1 1 0% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
         }
         .nav-button-active:hover {
           transform: translateY(-2px);
-          opacity: 0.95;
+          background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+          color: #15803d !important;
         }
-        .nav-external:hover {
-          transform: translateY(-2px);
-          background-color: #f1f5f9 !important;
-          border-color: #94a3b8 !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
-        }
+
         .location-pill:hover {
           transform: translateY(-1px);
-          border-color: #94a3b8 !important;
-          background-color: #f8fafc !important;
+          border-color: #16a34a !important;
+          background-color: #f0fdf4 !important;
+          color: #15803d !important;
+          box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15) !important;
         }
         .home-primary-btn {
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -488,6 +541,14 @@ export default function App() {
           border-color: #0f172a !important;
           box-shadow: 0 6px 16px rgba(0,0,0,0.06) !important;
         }
+        .scroll-top-btn {
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .scroll-top-btn:hover {
+          transform: translateY(-3px) scale(1.05);
+          background-color: #1e293b !important;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
+        }
       `}</style>
 
       {/* NAVBAR */}
@@ -495,16 +556,17 @@ export default function App() {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        padding: '12px 16px', 
-        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+        padding: isScrolled ? '8px 16px' : '12px 16px', 
+        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.95)', 
         backdropFilter: 'blur(12px)',
         borderBottom: '2px solid #e2e8f0',
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        boxShadow: '0 4px 20px rgba(11, 25, 44, 0.05)',
+        boxShadow: isScrolled ? '0 10px 25px rgba(11, 25, 44, 0.1)' : '0 4px 20px rgba(11, 25, 44, 0.05)',
         gap: '10px',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '100%' }}>
           <div 
@@ -527,33 +589,38 @@ export default function App() {
               boxShadow: '0 4px 10px rgba(11, 25, 44, 0.25)',
               border: '1.5px solid #fbbf24'
             }}>
-              UMS
+              UMS KK
             </div>
             <span style={{ fontWeight: '900', fontSize: '14px', letterSpacing: '-0.3px', color: '#0f172a' }}>
-               HUB <span style={{ color: '#e11d48' }}>CONFESSION</span>
+               CONFESSION <span style={{ color: '#e11d48' }}>HUB</span>
             </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div className="location-pill" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '4px', 
-              padding: '5px 10px', 
-              backgroundColor: '#ffffff', 
-              border: '1.5px solid #cbd5e1', 
-              borderRadius: '20px', 
-              boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-              fontSize: '11px',
-              fontWeight: '800',
-              color: '#0f172a',
-              userSelect: 'none',
-              transition: 'all 0.2s ease',
-              cursor: 'default'
-            }}>
+            {/* BUTTON LOKASI DENGAN PAUTAN GOOGLE */}
+            <div 
+              onClick={() => window.open('https://www.google.com/search?q=sabah+malaysia&oq=sabah+mala&gs_lcrp=EgZjaHJvbWUqDQgAEAAY4wIYsQMYgAQyDQgAEAAY4wIYsQMYgAQyCggBEC4YsQMYgAQyBwgCEAAYgAQyBwgDEAAYgAQyBggEEEUYOTIHCAUQABiABDIHCAYQABiABDIGCAcQRRg80gEINTgxMWowajeoAgCwAgA&sourceid=chrome&source=chrome.ob&ie=UTF-8', '_blank')}
+              className="location-pill" 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '4px', 
+                padding: '5px 10px', 
+                backgroundColor: '#ffffff', 
+                border: '1.5px solid #cbd5e1', 
+                borderRadius: '20px', 
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                fontSize: '11px',
+                fontWeight: '800',
+                color: '#0f172a',
+                userSelect: 'none',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
+              }}
+              title="Klik untuk info lanjut mengenai Sabah, Malaysia"
+            >
               <span style={{ fontSize: '12px', lineHeight: 1 }}>📍</span>
-              <span>Sabah</span>
-              <span style={{ fontSize: '8px', color: '#64748b', marginLeft: '2px' }}>▼</span>
+              <span>Sabah, Malaysia</span>
             </div>
 
             {isAdmin && (
@@ -575,98 +642,146 @@ export default function App() {
           justifyContent: 'space-between',
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.04)'
         }}>
+          {/* Menu 1: Home */}
           <button 
             onClick={() => setActiveTab('home')}
             className={activeTab === 'home' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              flex: 1,
-              background: activeTab === 'home' ? 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)' : 'transparent', 
+              flex: '1 1 0%',
+              minWidth: 0,
               border: 'none', 
               cursor: 'pointer', 
               fontWeight: '800', 
               fontSize: '12px', 
-              color: activeTab === 'home' ? '#fbbf24' : '#475569',
+              color: '#0f172a',
               padding: '8px 10px', 
               borderRadius: '10px',
-              boxShadow: activeTab === 'home' ? '0 4px 12px rgba(11, 25, 44, 0.25)' : 'none',
               letterSpacing: '0.3px',
-              textAlign: 'center'
+              textAlign: 'center',
+              backgroundColor: 'transparent',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              boxSizing: 'border-box'
             }}
           >
             🏠 Home
           </button>
 
+          {/* Menu 2: Confession */}
           <button 
             onClick={() => setActiveTab('confession')}
             className={activeTab === 'confession' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              flex: 1,
-              background: activeTab === 'confession' ? 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)' : 'transparent', 
+              flex: '1 1 0%',
+              minWidth: 0,
               border: 'none', 
               cursor: 'pointer', 
               fontWeight: '800', 
               fontSize: '12px', 
-              color: activeTab === 'confession' ? '#fbbf24' : '#475569',
+              color: '#0f172a',
               padding: '8px 10px', 
               borderRadius: '10px',
-              boxShadow: activeTab === 'confession' ? '0 4px 12px rgba(11, 25, 44, 0.25)' : 'none',
               letterSpacing: '0.3px',
-              textAlign: 'center'
+              textAlign: 'center',
+              backgroundColor: 'transparent',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              boxSizing: 'border-box'
             }}
           >
             💬 Confession
           </button>
 
-          {isAdmin && (
+          {/* Menu 3: Admin (jika admin) ATAU E-Hailing (jika bukan admin) */}
+          {isAdmin ? (
             <button 
               onClick={() => setActiveTab('admin')}
               className={activeTab === 'admin' ? 'nav-button-active' : 'nav-button'}
               style={{ 
-                flex: 1,
-                background: activeTab === 'admin' ? 'linear-gradient(135deg, #e11d48 0%, #9f1239 100%)' : 'transparent', 
+                flex: '1 1 0%',
+                minWidth: 0,
                 border: 'none', 
                 cursor: 'pointer', 
                 fontWeight: '800', 
                 fontSize: '12px', 
-                color: activeTab === 'admin' ? '#ffffff' : '#475569',
+                color: '#0f172a',
                 padding: '8px 10px', 
                 borderRadius: '10px',
-                boxShadow: activeTab === 'admin' ? '0 4px 12px rgba(225, 29, 72, 0.3)' : 'none',
                 letterSpacing: '0.3px',
-                textAlign: 'center'
+                textAlign: 'center',
+                backgroundColor: 'transparent',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                boxSizing: 'border-box'
               }}
             >
               🛡️ Admin {pendingConfessions.length > 0 && `(${pendingConfessions.length})`}
             </button>
+          ) : (
+            <button 
+              onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
+              className="nav-button"
+              style={{ 
+                flex: '1 1 0%',
+                minWidth: 0,
+                border: 'none', 
+                cursor: 'pointer', 
+                fontWeight: '800', 
+                fontSize: '12px', 
+                color: '#0f172a',
+                padding: '8px 10px', 
+                borderRadius: '10px',
+                letterSpacing: '0.3px',
+                textAlign: 'center',
+                backgroundColor: 'transparent',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                boxSizing: 'border-box'
+              }}
+            >
+              🚗 E-Hailing <span style={{ fontSize: '10px', color: '#e11d48' }}>↗</span>
+            </button>
           )}
 
-          <a 
-            href="https://ehailingumsapp.netlify.app" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="nav-external"
-            style={{ 
-              flex: 1,
-              textDecoration: 'none', 
-              fontWeight: '800', 
-              fontSize: '12px', 
-              color: '#0f172a',
-              backgroundColor: '#ffffff',
-              padding: '8px 10px', 
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-              border: '1px solid #cbd5e1',
-              letterSpacing: '0.3px',
-              textAlign: 'center',
-              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
-          >
-            🚗 E-Hailing <span style={{ fontSize: '10px', color: '#e11d48' }}>↗</span>
-          </a>
+          {/* Menu 4 (jika admin) */}
+          {isAdmin && (
+            <button 
+              onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
+              className="nav-button"
+              style={{ 
+                flex: '1 1 0%',
+                minWidth: 0,
+                border: 'none', 
+                cursor: 'pointer', 
+                fontWeight: '800', 
+                fontSize: '12px', 
+                color: '#0f172a',
+                padding: '8px 10px', 
+                borderRadius: '10px',
+                letterSpacing: '0.3px',
+                textAlign: 'center',
+                backgroundColor: 'transparent',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                boxSizing: 'border-box'
+              }}
+            >
+              🚗 E-Hailing <span style={{ fontSize: '10px', color: '#e11d48' }}>↗</span>
+            </button>
+          )}
         </div>
       </nav>
 
@@ -683,7 +798,7 @@ export default function App() {
 
       {/* PANEL ADMIN */}
       {activeTab === 'admin' && isAdmin ? (
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
+        <div className="fade-in-card" style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           <div style={{ marginBottom: '20px' }}>
             <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>🛡️ Senarai Menunggu Kelulusan</h2>
             <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>Hantaran di bawah memerlukan kelulusan anda sebelum disiarkan kepada umum.</p>
@@ -743,9 +858,8 @@ export default function App() {
         </div>
       ) : activeTab === 'home' ? (
         /* HOME PAGE */
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
+        <div className="fade-in-card" style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           
-          {/* Kad Utama Pengenalan */}
           <div style={{ 
             backgroundColor: '#ffffff', 
             padding: '40px 24px', 
@@ -804,10 +918,8 @@ export default function App() {
                  Confession 💬
               </button>
 
-              <a 
-                href="https://ehailingumsapp.netlify.app" 
-                target="_blank" 
-                rel="noopener noreferrer"
+              <button 
+                onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
                 className="home-secondary-btn"
                 style={{ 
                   backgroundColor: '#f8fafc', 
@@ -817,17 +929,14 @@ export default function App() {
                   borderRadius: '14px', 
                   fontWeight: '700', 
                   fontSize: '13px', 
-                  cursor: 'pointer', 
-                  textDecoration: 'none', 
-                  display: 'inline-block' 
+                  cursor: 'pointer'
                 }}
               >
                 E-Hailing UMS 🚗
-              </a>
+              </button>
             </div>
           </div>
 
-          {/* STATISTIK LANGSUNG (LIVE COUNTER) */}
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
@@ -844,7 +953,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* BAHAGIAN CONFESSION TERKINI (PREVIEW 3 TERATAS) */}
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: 0 }}>🔥 Confession Terkini</h3>
@@ -896,22 +1004,19 @@ export default function App() {
             </div>
           </div>
 
-          {/* PINTAS PANTAIS / QUICK LINKS (Kalendar Akademik telah dibuang) */}
           <div style={{ marginBottom: '30px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: '0 0 14px 0' }}>⚡ Pintas Pantas Kampus</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px' }}>
               
-              <a 
-                href="https://ehailingumsapp.netlify.app" 
-                target="_blank" 
-                rel="noopener noreferrer"
+              <div 
+                onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
                 className="quick-link-card"
-                style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', textDecoration: 'none', display: 'block', transition: 'all 0.2s ease' }}
+                style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s ease' }}
               >
                 <span style={{ fontSize: '16px', display: 'block', marginBottom: '4px' }}>🚗</span>
                 <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', display: 'block' }}>E-Hailing UMS</span>
                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Tempahan & info pengangkutan pelajar</span>
-              </a>
+              </div>
 
               <div 
                 onClick={() => setActiveTab('confession')}
@@ -926,16 +1031,15 @@ export default function App() {
             </div>
           </div>
 
-          {/* FOOTER INTERAKTIF */}
           <footer style={{ textAlign: 'center', padding: '20px 0 10px 0', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '12px', fontWeight: '600' }}>
-            <p style={{ margin: '0 0 6px 0' }}>UMS HUB CONFESSION &copy; 2026 • Platform Komuniti Pelajar UMS Sabah</p>
+            <p style={{ margin: '0 0 6px 0' }}>UMS CONFESSION HUB &copy; 2026 • Platform Komuniti Pelajar UMS Sabah</p>
             <p style={{ margin: 0, fontSize: '11px' }}>Penafian: Segala hantaran dan luahan adalah pandangan peribadi individu dan tidak mencerminkan pendirian rasmi pihak pentadbir platform atau mana-mana institusi. Pihak pentadbir berhak memadam hantaran yang melanggar garis panduan komuniti</p>
           </footer>
 
         </div>
       ) : (
         /* CONFESSIONS PAGE */
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
+        <div className="fade-in-card" style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           
           <div style={{ marginBottom: '20px' }}>
             <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 4px 0', letterSpacing: '-0.5px', color: '#0f172a' }}>Students Confessions</h2>
@@ -1009,7 +1113,7 @@ export default function App() {
                 const reactions = item.reactions || { like: 0, haha: 0, laugh: 0, sad: 0, fire: 0 };
 
                 return (
-                  <div key={item.id} style={{ 
+                  <div key={item.id} className="fade-in-card" style={{ 
                     backgroundColor: '#ffffff', border: '2px solid #0f172a', borderRadius: '16px', padding: '18px', 
                     boxShadow: '0 4px 6px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden', boxSizing: 'border-box'
                   }}>
@@ -1263,6 +1367,36 @@ export default function App() {
           </div>
 
         </div>
+      )}
+
+      {/* BUTANG KEMBALI KE ATAS (SCROLL TO TOP) */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="scroll-top-btn"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            backgroundColor: '#0f172a',
+            color: '#ffffff',
+            border: '2px solid #fbbf24',
+            borderRadius: '50%',
+            width: '42px',
+            height: '42px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+            zIndex: 999
+          }}
+          title="Kembali ke atas"
+        >
+          ↑
+        </button>
       )}
 
     </div>
