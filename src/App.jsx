@@ -94,17 +94,17 @@ export default function App() {
     }
   };
 
-  // Fungsi untuk membersihkan dan memformat nombor telefon ke format standard WhatsApp (601...)
+  // Fungsi untuk membersihkan dan memformat nombor telefon ke format standard WhatsApp (+60 / 60...)
   const formatWhatsappNumber = (number) => {
     if (!number) return '';
-    // Buang semua karakter selain nombor (cth: +, -, jarak)
+    // Buang semua aksara bukan nombor (cth: +, -, jarak, simbol)
     let cleaned = number.replace(/\D/g, '');
 
-    // Jika bermula dengan '0' (cth: 0123456789), tukar kepada '60123456789'
+    // Jika nombor bermula dengan '0', buang '0' tersebut dan tambah '60' di depan
     if (cleaned.startsWith('0')) {
-      cleaned = '6' + cleaned;
+      cleaned = '60' + cleaned.slice(1);
     }
-    // Jika pengguna masukkan terus nombor tanpa 6 atau 0 di depan (cth: 123456789 dan panjang munasabah)
+    // Jika pengguna masukkan terus nombor tanpa 6 atau 0 di depan (cth: 162565683)
     else if (!cleaned.startsWith('60') && cleaned.length >= 9 && cleaned.length <= 10) {
       cleaned = '60' + cleaned;
     }
@@ -1146,7 +1146,7 @@ export default function App() {
                 type="text" 
                 id="productWhatsappInput"
                 name="productWhatsapp"
-                placeholder="No. WhatsApp (Cth: 0123456789 / 60123456789)" 
+                placeholder="No. WhatsApp (Cth: 0162565683 / 60162565683)" 
                 value={productWhatsapp}
                 onChange={(e) => setProductWhatsapp(e.target.value)}
                 style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }}
