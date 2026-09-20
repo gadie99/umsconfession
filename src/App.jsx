@@ -156,7 +156,6 @@ export default function App() {
       console.error("Ralat real-time confessions: ", error);
     });
 
-    // Ambil produk yang berstatus 'available' atau 'sold' sahaja untuk paparan umum
     const qProducts = query(
       collection(db, 'products'),
       where('status', 'in', ['available', 'sold']),
@@ -225,7 +224,6 @@ export default function App() {
       console.error("Ralat pending confessions: ", error);
     });
 
-    // Ambil produk berstatus 'pending' untuk admin
     const qPendingProducts = query(
       collection(db, 'products'),
       where('status', '==', 'pending'),
@@ -352,7 +350,6 @@ export default function App() {
 
     setProductLoading(true);
     try {
-      // Tetapkan status kepada 'pending' supaya ia menunggu kelulusan admin
       const docRef = await addDoc(collection(db, 'products'), {
         title: productTitle,
         price: productPrice,
@@ -864,7 +861,7 @@ export default function App() {
 
                       {item.imageUrl && (
                         <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', textAlign: 'center' }}>
-                          <img src={item.imageUrl} alt="Pending attachment" style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                          <img src={item.imageUrl} alt="Pending attachment" style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
                         </div>
                       )}
 
@@ -917,7 +914,7 @@ export default function App() {
                     <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
                       {prod.imageUrl && (
                         <div style={{ width: '100px', height: '100px', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#f1f5f9', flexShrink: 0 }}>
-                          <img src={prod.imageUrl} alt={prod.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={prod.imageUrl} alt={prod.title} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </div>
                       )}
                       <div>
@@ -1155,7 +1152,7 @@ export default function App() {
 
               {productImagePreview && (
                 <div style={{ position: 'relative', marginTop: '10px', display: 'inline-block' }}>
-                  <img src={productImagePreview} alt="Preview" style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                  <img src={productImagePreview} alt="Preview" style={{ width: '90px', height: '90px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }} />
                   <button 
                     type="button" 
                     onClick={() => { setProductImageFile(null); setProductImagePreview(null); }}
@@ -1168,7 +1165,7 @@ export default function App() {
             </div>
           </form>
 
-          {/* SENARAI PRODUK */}
+          {/* SENARAI PRODUK (Diubah object-fit kepada contain supaya tidak terpotong di telefon) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
             {products.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
@@ -1192,13 +1189,13 @@ export default function App() {
                       {prod.imageUrl ? (
                         <div style={{ 
                           width: '100%', height: '180px', borderRadius: '10px', overflow: 'hidden', 
-                          marginBottom: '10px', backgroundColor: '#f1f5f9', display: 'flex', 
+                          marginBottom: '10px', backgroundColor: '#f8fafc', display: 'flex', 
                           alignItems: 'center', justifyContent: 'center', position: 'relative' 
                         }}>
                           <img 
                             src={prod.imageUrl} 
                             alt={prod.title} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                           />
                           {isSold && (
                             <div style={{ position: 'absolute', inset: '0', backgroundColor: 'rgba(15, 23, 42, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1298,7 +1295,7 @@ export default function App() {
 
             {imagePreview && (
               <div style={{ position: 'relative', marginTop: '10px', display: 'inline-block' }}>
-                <img src={imagePreview} alt="Preview" style={{ maxHeight: '120px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                <img src={imagePreview} alt="Preview" style={{ maxHeight: '120px', maxWidth: '100%', objectFit: 'contain', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }} />
                 <button 
                   type="button" 
                   onClick={() => { setImageFile(null); setImagePreview(null); }}
@@ -1384,7 +1381,7 @@ export default function App() {
 
                     {item.imageUrl && (
                       <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', textAlign: 'center' }}>
-                        <img src={item.imageUrl} alt="Confession attachment" style={{ maxWidth: '100%', maxHeight: '350px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                        <img src={item.imageUrl} alt="Confession attachment" style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
                       </div>
                     )}
 
