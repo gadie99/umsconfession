@@ -11,8 +11,7 @@ import {
   increment,
   deleteDoc,
   onSnapshot,
-  where,
-  getDocs 
+  where 
 } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 
@@ -39,6 +38,17 @@ export default function App() {
   const [likedComments, setLikedComments] = useState({});
   const [myComments, setMyComments] = useState({});
   const [myConfessions, setMyConfessions] = useState({});
+  const [myProducts, setMyProducts] = useState({});
+
+  // State untuk Marketplace
+  const [products, setProducts] = useState([]);
+  const [productTitle, setProductTitle] = useState('');
+  const [productPrice, setProductPrice] = useState('');
+  const [productCategory, setProductCategory] = useState('Makanan');
+  const [productWhatsapp, setProductWhatsapp] = useState('');
+  const [productImageFile, setProductImageFile] = useState(null);
+  const [productImagePreview, setProductImagePreview] = useState(null);
+  const [productLoading, setProductLoading] = useState(false);
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -109,6 +119,22 @@ export default function App() {
     }
   };
 
+  const handleProductImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1048576) {
+        alert("Saiz fail produk terlalu besar. Sila pilih gambar di bawah 1MB.");
+        return;
+      }
+      setProductImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProductImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   useEffect(() => {
     const q = query(
       collection(db, 'confessions'), 
@@ -129,6 +155,20 @@ export default function App() {
       console.error("Ralat real-time confessions: ", error);
     });
 
+    const qProducts = query(
+      collection(db, 'products'),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribeProducts = onSnapshot(qProducts, (snapshot) => {
+      const productsData = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+      setProducts(productsData);
+    }, (error) => {
+      console.error("Ralat real-time products: ", error);
+    });
+
     const savedUserReactions = JSON.parse(localStorage.getItem('userReactions') || '{}');
     setUserReactions(savedUserReactions);
 
@@ -141,6 +181,9 @@ export default function App() {
     const savedMyConfessions = JSON.parse(localStorage.getItem('myConfessions') || '{}');
     setMyConfessions(savedMyConfessions);
 
+    const savedMyProducts = JSON.parse(localStorage.getItem('myProducts') || '{}');
+    setMyProducts(savedMyProducts);
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAdmin(true);
@@ -152,6 +195,7 @@ export default function App() {
     return () => {
       unsubscribeAuth();
       unsubscribeConfessions();
+      unsubscribeProducts();
     };
   }, []);
 
@@ -275,6 +319,54 @@ export default function App() {
     }
   };
 
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    if (!productTitle.trim() || !productPrice.trim() || !productWhatsapp.trim()) {
+      alert("Sila lengkapkan nama produk, harga, dan nombor WhatsApp.");
+      return;
+    }
+
+    setProductLoading(true);
+    try {
+      const docRef = await addDoc(collection(db, 'products'), {
+        title: productTitle,
+        price: productPrice,
+        category: productCategory,
+        whatsapp: productWhatsapp,
+        imageUrl: productImagePreview || null,
+        status: 'available',
+        createdAt: serverTimestamp()
+      });
+
+      const updatedMyProducts = { ...myProducts, [docRef.id]: true };
+      setMyProducts(updatedMyProducts);
+      localStorage.setItem('myProducts', JSON.stringify(updatedMyProducts));
+
+      setProductTitle('');
+      setProductPrice('');
+      setProductWhatsapp('');
+      setProductImageFile(null);
+      setProductImagePreview(null);
+      alert("Iklan produk berjaya dihantar ke Marketplace!");
+    } catch (error) {
+      console.error("Ralat menghantar produk: ", error);
+      alert("Gagal menghantar iklan produk.");
+    } finally {
+      setProductLoading(false);
+    }
+  };
+
+  const handleToggleProductStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus === 'sold' ? 'available' : 'sold';
+    try {
+      const productRef = doc(db, 'products', id);
+      await updateDoc(productRef, { status: newStatus });
+    } catch (error) {
+      console.error("Ralat menukar status produk:", error);
+      alert("Gagal menukar status produk.");
+    }
+  };
+
   const handleApproveConfession = async (id) => {
     try {
       const confessionRef = doc(db, 'confessions', id);
@@ -283,6 +375,17 @@ export default function App() {
     } catch (error) {
       console.error("Ralat meluluskan confession:", error);
       alert("Gagal meluluskan confession.");
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm("Adakah anda pasti mahu memadam produk ini?")) return;
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      alert("Produk berjaya dipadam.");
+    } catch (error) {
+      console.error("Ralat memadam produk:", error);
+      alert("Gagal memadam produk.");
     }
   };
 
@@ -597,9 +700,8 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* BUTTON LOKASI DENGAN PAUTAN GOOGLE */}
             <div 
-              onClick={() => window.open('https://www.google.com/search?q=sabah+malaysia&oq=sabah+mala&gs_lcrp=EgZjaHJvbWUqDQgAEAAY4wIYsQMYgAQyDQgAEAAY4wIYsQMYgAQyCggBEC4YsQMYgAQyBwgCEAAYgAQyBwgDEAAYgAQyBggEEEUYOTIHCAUQABiABDIHCAYQABiABDIGCAcQRRg80gEINTgxMWowajeoAgCwAgA&sourceid=chrome&source=chrome.ob&ie=UTF-8', '_blank')}
+              onClick={() => window.open('https://www.google.com/search?q=sabah+malaysia', '_blank')}
               className="location-pill" 
               style={{ 
                 display: 'flex', 
@@ -642,146 +744,63 @@ export default function App() {
           justifyContent: 'space-between',
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.04)'
         }}>
-          {/* Menu 1: Home */}
           <button 
             onClick={() => setActiveTab('home')}
             className={activeTab === 'home' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              flex: '1 1 0%',
-              minWidth: 0,
-              border: 'none', 
-              cursor: 'pointer', 
-              fontWeight: '800', 
-              fontSize: '12px', 
-              color: '#0f172a',
-              padding: '8px 10px', 
-              borderRadius: '10px',
-              letterSpacing: '0.3px',
-              textAlign: 'center',
-              backgroundColor: 'transparent',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              boxSizing: 'border-box'
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
+              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
             }}
           >
             🏠 Home
           </button>
 
-          {/* Menu 2: Confession */}
           <button 
             onClick={() => setActiveTab('confession')}
             className={activeTab === 'confession' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              flex: '1 1 0%',
-              minWidth: 0,
-              border: 'none', 
-              cursor: 'pointer', 
-              fontWeight: '800', 
-              fontSize: '12px', 
-              color: '#0f172a',
-              padding: '8px 10px', 
-              borderRadius: '10px',
-              letterSpacing: '0.3px',
-              textAlign: 'center',
-              backgroundColor: 'transparent',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              boxSizing: 'border-box'
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
+              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
             }}
           >
             💬 Confession
           </button>
 
-          {/* Menu 3: Admin (jika admin) ATAU E-Hailing (jika bukan admin) */}
-          {isAdmin ? (
+          <button 
+            onClick={() => setActiveTab('marketplace')}
+            className={activeTab === 'marketplace' ? 'nav-button-active' : 'nav-button'}
+            style={{ 
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
+              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
+            }}
+          >
+            🛍️ Marketplace
+          </button>
+
+          {isAdmin && (
             <button 
               onClick={() => setActiveTab('admin')}
               className={activeTab === 'admin' ? 'nav-button-active' : 'nav-button'}
               style={{ 
-                flex: '1 1 0%',
-                minWidth: 0,
-                border: 'none', 
-                cursor: 'pointer', 
-                fontWeight: '800', 
-                fontSize: '12px', 
-                color: '#0f172a',
-                padding: '8px 10px', 
-                borderRadius: '10px',
-                letterSpacing: '0.3px',
-                textAlign: 'center',
-                backgroundColor: 'transparent',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                boxSizing: 'border-box'
+                flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
+                padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
               }}
             >
               🛡️ Admin {pendingConfessions.length > 0 && `(${pendingConfessions.length})`}
             </button>
-          ) : (
-            <button 
-              onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
-              className="nav-button"
-              style={{ 
-                flex: '1 1 0%',
-                minWidth: 0,
-                border: 'none', 
-                cursor: 'pointer', 
-                fontWeight: '800', 
-                fontSize: '12px', 
-                color: '#0f172a',
-                padding: '8px 10px', 
-                borderRadius: '10px',
-                letterSpacing: '0.3px',
-                textAlign: 'center',
-                backgroundColor: 'transparent',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                boxSizing: 'border-box'
-              }}
-            >
-              🚗 E-Hailing <span style={{ fontSize: '10px', color: '#e11d48' }}>↗</span>
-            </button>
           )}
 
-          {/* Menu 4 (jika admin) */}
-          {isAdmin && (
-            <button 
-              onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
-              className="nav-button"
-              style={{ 
-                flex: '1 1 0%',
-                minWidth: 0,
-                border: 'none', 
-                cursor: 'pointer', 
-                fontWeight: '800', 
-                fontSize: '12px', 
-                color: '#0f172a',
-                padding: '8px 10px', 
-                borderRadius: '10px',
-                letterSpacing: '0.3px',
-                textAlign: 'center',
-                backgroundColor: 'transparent',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                boxSizing: 'border-box'
-              }}
-            >
-              🚗 E-Hailing <span style={{ fontSize: '10px', color: '#e11d48' }}>↗</span>
-            </button>
-          )}
+          <button 
+            onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
+            className="nav-button"
+            style={{ 
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
+              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', boxSizing: 'border-box'
+            }}
+          >
+            🚗 E-Hailing <span style={{ fontSize: '10px', color: '#e11d48' }}>↗</span>
+          </button>
         </div>
       </nav>
 
@@ -789,8 +808,8 @@ export default function App() {
         <div style={{ maxWidth: '400px', margin: '20px auto', padding: '15px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#0f172a' }}>Log Masuk Admin</span>
-            <input type="email" placeholder="Emel" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }} />
-            <input type="password" placeholder="Katalaluan" value={password} onChange={e => setPassword(e.target.value)} required style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }} />
+            <input type="email" id="adminEmail" name="email" placeholder="Emel" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }} />
+            <input type="password" id="adminPassword" name="password" placeholder="Katalaluan" value={password} onChange={e => setPassword(e.target.value)} required style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }} />
             <button type="submit" style={{ backgroundColor: '#0f172a', color: '#ffffff', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Masuk</button>
           </form>
         </div>
@@ -861,36 +880,18 @@ export default function App() {
         <div className="fade-in-card" style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           
           <div style={{ 
-            backgroundColor: '#ffffff', 
-            padding: '40px 24px', 
-            borderRadius: '28px', 
-            textAlign: 'center',
-            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.06)',
-            marginBottom: '30px'
+            backgroundColor: '#ffffff', padding: '40px 24px', borderRadius: '28px', textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.06)', marginBottom: '30px'
           }}>
             <div style={{ 
-              width: '64px', 
-              height: '64px', 
-              borderRadius: '20px', 
-              backgroundColor: '#fef2f2', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              fontSize: '28px', 
-              margin: '0 auto 16px auto',
+              width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#fef2f2', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 16px auto',
               boxShadow: '0 8px 16px rgba(225, 29, 72, 0.08)'
             }}>
               🎓
             </div>
             
-            <h1 style={{ 
-              fontSize: '26px', 
-              fontWeight: '900', 
-              margin: '0 0 12px 0', 
-              color: '#0f172a', 
-              letterSpacing: '-0.5px',
-              lineHeight: '1.3' 
-            }}>
+            <h1 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 12px 0', color: '#0f172a', letterSpacing: '-0.5px', lineHeight: '1.3' }}>
               Selamat Datang ke <br />
               <span style={{ color: '#e11d48', fontSize: '30px' }}>UMS HUB</span>
             </h1>
@@ -903,46 +904,22 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('confession')}
                 className="home-primary-btn"
-                style={{ 
-                  backgroundColor: '#0f172a', 
-                  color: '#ffffff', 
-                  border: 'none', 
-                  padding: '12px 24px', 
-                  borderRadius: '14px', 
-                  fontWeight: '700', 
-                  fontSize: '13px', 
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 20px rgba(15, 23, 42, 0.2)'
-                }}
+                style={{ backgroundColor: '#0f172a', color: '#ffffff', border: 'none', padding: '12px 24px', borderRadius: '14px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.2)' }}
               >
                  Confession 💬
               </button>
 
               <button 
-                onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
+                onClick={() => setActiveTab('marketplace')}
                 className="home-secondary-btn"
-                style={{ 
-                  backgroundColor: '#f8fafc', 
-                  color: '#0f172a', 
-                  border: '1px solid #e2e8f0', 
-                  padding: '12px 24px', 
-                  borderRadius: '14px', 
-                  fontWeight: '700', 
-                  fontSize: '13px', 
-                  cursor: 'pointer'
-                }}
+                style={{ backgroundColor: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', padding: '12px 24px', borderRadius: '14px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
               >
-                E-Hailing UMS 🚗
+                Marketplace 🛍️
               </button>
             </div>
           </div>
 
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '14px', 
-            marginBottom: '30px' 
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '30px' }}>
             <div style={{ backgroundColor: '#ffffff', padding: '18px', borderRadius: '16px', border: '1px solid #e2e8f0', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
               <span style={{ fontSize: '24px', fontWeight: '900', color: '#e11d48', display: 'block', marginBottom: '4px' }}>{totalConfessionsCount}</span>
               <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Confession Disiarkan</span>
@@ -956,10 +933,7 @@ export default function App() {
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: 0 }}>🔥 Confession Terkini</h3>
-              <button 
-                onClick={() => setActiveTab('confession')}
-                style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: '800', fontSize: '12px', cursor: 'pointer' }}
-              >
+              <button onClick={() => setActiveTab('confession')} style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: '800', fontSize: '12px', cursor: 'pointer' }}>
                 Lihat Semua →
               </button>
             </div>
@@ -976,15 +950,7 @@ export default function App() {
                     <div 
                       key={item.id} 
                       onClick={() => setActiveTab('confession')}
-                      style={{ 
-                        backgroundColor: '#ffffff', 
-                        padding: '14px 16px', 
-                        borderRadius: '14px', 
-                        border: '1px solid #e2e8f0', 
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
-                      }}
+                      style={{ backgroundColor: '#ffffff', padding: '14px 16px', borderRadius: '14px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.01)' }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <span style={{ backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, padding: '2px 8px', borderRadius: '10px', fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>
@@ -1019,13 +985,13 @@ export default function App() {
               </div>
 
               <div 
-                onClick={() => setActiveTab('confession')}
+                onClick={() => setActiveTab('marketplace')}
                 className="quick-link-card"
                 style={{ backgroundColor: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s ease' }}
               >
-                <span style={{ fontSize: '16px', display: 'block', marginBottom: '4px' }}>💬</span>
-                <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', display: 'block' }}>Hantar Luahan</span>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Kongsi cerita kampus secara anonim</span>
+                <span style={{ fontSize: '16px', display: 'block', marginBottom: '4px' }}>🛍️</span>
+                <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', display: 'block' }}>Marketplace</span>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>Jual beli barangan & servis pelajar</span>
               </div>
 
             </div>
@@ -1033,8 +999,206 @@ export default function App() {
 
           <footer style={{ textAlign: 'center', padding: '20px 0 10px 0', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '12px', fontWeight: '600' }}>
             <p style={{ margin: '0 0 6px 0' }}>UMS CONFESSION HUB &copy; 2026 • Platform Komuniti Pelajar UMS Sabah</p>
-            <p style={{ margin: 0, fontSize: '11px' }}>Penafian: Segala hantaran dan luahan adalah pandangan peribadi individu dan tidak mencerminkan pendirian rasmi pihak pentadbir platform atau mana-mana institusi. Pihak pentadbir berhak memadam hantaran yang melanggar garis panduan komuniti</p>
+            <p style={{ margin: 0, fontSize: '11px' }}>Penafian: Segala hantaran dan luahan adalah pandangan peribadi individu dan tidak mencerminkan pendirian rasmi pihak pentadbir platform.</p>
           </footer>
+
+        </div>
+      ) : activeTab === 'marketplace' ? (
+        /* MARKETPLACE PAGE DENGAN SAiz TETAP & OBJECT-FIT: COVER SEPERTI SHOPEE */
+        <div className="fade-in-card" style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
+          
+          <div style={{ marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>🛍️ UMS Student Marketplace</h2>
+            <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>Platform iklan pelbagai produk & perkhidmatan komuniti pelajar UMS.</p>
+          </div>
+
+          <form onSubmit={handleProductSubmit} style={{ backgroundColor: '#ffffff', padding: '16px 18px', borderRadius: '16px', marginBottom: '25px', border: '2px solid #0f172a', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 12px 0', color: '#0f172a' }}>Iklankan Produk / Servis Anda</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <input 
+                type="text" 
+                id="productTitleInput"
+                name="productTitle"
+                placeholder="Nama Produk / Servis (Cth: Buku Kalkulus / Nasi Ayam)" 
+                value={productTitle}
+                onChange={(e) => setProductTitle(e.target.value)}
+                style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }}
+                required
+              />
+              
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <input 
+                  type="text" 
+                  id="productPriceInput"
+                  name="productPrice"
+                  placeholder="Harga (Cth: RM15.00)" 
+                  value={productPrice}
+                  onChange={(e) => setProductPrice(e.target.value)}
+                  style={{ flex: 1, minWidth: '140px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }}
+                  required
+                />
+                
+                <select 
+                  id="productCategorySelect"
+                  name="productCategory"
+                  value={productCategory}
+                  onChange={(e) => setProductCategory(e.target.value)}
+                  style={{ flex: 1, minWidth: '140px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a', fontWeight: '700' }}
+                >
+                  <option value="Makanan">🍱 Makanan & Minuman</option>
+                  <option value="Buku / Nota">📚 Buku & Nota Kuliah</option>
+                  <option value="Pakaian">👕 Pakaian & Bundle</option>
+                  <option value="Elektronik">💻 Elektronik & Gadget</option>
+                  <option value="Servis">🛠️ Servis / Perkhidmatan</option>
+                  <option value="Lain-lain">📦 Lain-lain</option>
+                </select>
+              </div>
+
+              <input 
+                type="text" 
+                id="productWhatsappInput"
+                name="productWhatsapp"
+                placeholder="No. WhatsApp (Cth: 60123456789)" 
+                value={productWhatsapp}
+                onChange={(e) => setProductWhatsapp(e.target.value)}
+                style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }}
+                required
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: '#475569', backgroundColor: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                  <span>📷 Upload Gambar Produk</span>
+                  <input type="file" accept="image/*" onChange={handleProductImageChange} style={{ display: 'none' }} />
+                </label>
+
+                <button 
+                  type="submit" 
+                  disabled={productLoading}
+                  style={{ backgroundColor: '#0f172a', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
+                >
+                  {productLoading ? 'Menghantar...' : 'Hantar Iklan'}
+                </button>
+              </div>
+
+              {productImagePreview && (
+                <div style={{ position: 'relative', marginTop: '10px', display: 'inline-block' }}>
+                  <img src={productImagePreview} alt="Preview" style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                  <button 
+                    type="button" 
+                    onClick={() => { setProductImageFile(null); setProductImagePreview(null); }}
+                    style={{ position: 'absolute', top: '4px', right: '4px', backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', cursor: 'pointer' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+          </form>
+
+          {/* SENARAI PRODUK: KONTENA TINGGI TETAP 180px & OBJECT-FIT: COVER SEPERTI SHOPEE */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+            {products.length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Belum ada produk diiklankan di marketplace.</p>
+              </div>
+            ) : (
+              products.map((prod) => {
+                const isSold = prod.status === 'sold';
+                const isMyProd = myProducts[prod.id];
+
+                return (
+                  <div key={prod.id} style={{ 
+                    backgroundColor: isSold ? '#f1f5f9' : '#ffffff', 
+                    padding: '12px', borderRadius: '16px', 
+                    border: isSold ? '1.5px solid #cbd5e1' : '1px solid #e2e8f0', 
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)', 
+                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                    opacity: isSold ? 0.75 : 1
+                  }}>
+                    <div>
+                      {prod.imageUrl ? (
+                        <div style={{ 
+                          width: '100%', 
+                          height: '180px', /* Tetap saiz ketinggian kotak produk seperti Shopee */ 
+                          borderRadius: '10px', 
+                          overflow: 'hidden', 
+                          marginBottom: '10px', 
+                          backgroundColor: '#f1f5f9', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          position: 'relative' 
+                        }}>
+                          <img 
+                            src={prod.imageUrl} 
+                            alt={prod.title} 
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'cover' /* Memotong & meratakan gambar memenuhi kotak petak secara kemas tanpa regang melintang */ 
+                            }} 
+                          />
+                          {isSold && (
+                            <div style={{ position: 'absolute', inset: '0', backgroundColor: 'rgba(15, 23, 42, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <span style={{ backgroundColor: '#ef4444', color: '#ffffff', padding: '4px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '13px', letterSpacing: '1px' }}>SOLD OUT</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ height: '180px', backgroundColor: '#e2e8f0', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '12px', marginBottom: '10px', position: 'relative' }}>
+                          {isSold ? 'SOLD OUT' : 'Tiada Gambar'}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '10px', backgroundColor: '#f0fdf4', color: '#16a34a', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>
+                          {prod.category || 'Produk'}
+                        </span>
+                        {isSold && (
+                          <span style={{ fontSize: '10px', backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>Terjual</span>
+                        )}
+                      </div>
+
+                      <h4 style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', margin: '4px 0 2px 0', textDecoration: isSold ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {prod.title}
+                      </h4>
+                      <p style={{ fontSize: '13px', fontWeight: '900', color: '#e11d48', margin: '0 0 10px 0' }}>{prod.price}</p>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {!isSold && (
+                        <button 
+                          onClick={() => window.open(`https://wa.me/${prod.whatsapp}?text=Hai,%20saya%20berminat%20dengan%20produk%20${encodeURIComponent(prod.title)}%20yang%20diiklankan%20di%20UMS%20Marketplace.`, '_blank')}
+                          style={{ width: '100%', backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '8px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                        >
+                          WhatsApp Penjual
+                        </button>
+                      )}
+
+                      {(isMyProd || isAdmin) && (
+                        <button 
+                          onClick={() => handleToggleProductStatus(prod.id, prod.status)}
+                          style={{ width: '100%', backgroundColor: isSold ? '#e2e8f0' : '#fef3c7', color: isSold ? '#0f172a' : '#d97706', border: 'none', padding: '6px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          {isSold ? 'Tukar ke Available' : 'Tukar ke SOLD'}
+                        </button>
+                      )}
+
+                      {isAdmin && (
+                        <button 
+                          onClick={() => handleDeleteProduct(prod.id)}
+                          style={{ width: '100%', backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '6px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          Padam (Admin)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
 
         </div>
       ) : (
@@ -1050,6 +1214,8 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>Pilih kategori luahan anda:</span>
               <select 
+                id="confessionCategorySelect"
+                name="category"
                 value={category} 
                 onChange={(e) => setCategory(e.target.value)}
                 style={{ padding: '5px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px', backgroundColor: '#f8fafc', fontWeight: '700', color: '#0f172a' }}
@@ -1178,16 +1344,8 @@ export default function App() {
                               style={{
                                 background: isSelected ? '#e2e8f0' : '#f8fafc',
                                 border: isSelected ? '1.5px solid #0f172a' : '1.5px solid #e2e8f0',
-                                borderRadius: '20px',
-                                padding: '4px 8px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                fontWeight: '700',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                color: '#0f172a',
-                                transition: 'all 0.1s ease'
+                                borderRadius: '20px', padding: '4px 8px', cursor: 'pointer', fontSize: '12px', fontWeight: '700',
+                                display: 'flex', alignItems: 'center', gap: '4px', color: '#0f172a', transition: 'all 0.1s ease'
                               }}
                             >
                               <span>{r.emoji}</span>
@@ -1258,6 +1416,8 @@ export default function App() {
                                     <form onSubmit={(e) => handleReplySubmit(item.id, cmt.id, cmt.id, e)} style={{ display: 'flex', gap: '6px', paddingLeft: '20px', marginTop: '4px' }}>
                                       <input 
                                         type="text" 
+                                        id={`reply-${cmt.id}`}
+                                        name="reply"
                                         value={replyInputs[cmt.id] || ''}
                                         onChange={(e) => setReplyInputs({ ...replyInputs, [cmt.id]: e.target.value })}
                                         placeholder="Write a reply..." 
@@ -1312,6 +1472,8 @@ export default function App() {
                                               <form onSubmit={(e) => handleReplySubmit(item.id, cmt.id, rep.id, e)} style={{ display: 'flex', gap: '6px', paddingLeft: '15px', marginTop: '2px' }}>
                                                 <input 
                                                   type="text" 
+                                                  id={`reply-${rep.id}`}
+                                                  name="reply"
                                                   value={replyInputs[rep.id] || ''}
                                                   onChange={(e) => setReplyInputs({ ...replyInputs, [rep.id]: e.target.value })}
                                                   placeholder="Write a reply..." 
@@ -1344,6 +1506,8 @@ export default function App() {
                         <form onSubmit={(e) => handleCommentSubmit(item.id, e)} style={{ display: 'flex', gap: '6px' }}>
                           <input 
                             type="text" 
+                            id={`comment-${item.id}`}
+                            name="comment"
                             value={commentInputs[item.id] || ''}
                             onChange={(e) => setCommentInputs({ ...commentInputs, [item.id]: e.target.value })}
                             placeholder="Write a comment as Anonymous..." 
@@ -1369,29 +1533,17 @@ export default function App() {
         </div>
       )}
 
-      {/* BUTANG KEMBALI KE ATAS (SCROLL TO TOP) */}
+      {/* BUTANG KEMBALI KE ATAS */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}
           className="scroll-top-btn"
           style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            backgroundColor: '#0f172a',
-            color: '#ffffff',
-            border: '2px solid #fbbf24',
-            borderRadius: '50%',
-            width: '42px',
-            height: '42px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-            zIndex: 999
+            position: 'fixed', bottom: '24px', right: '24px',
+            backgroundColor: '#0f172a', color: '#ffffff', border: '2px solid #fbbf24',
+            borderRadius: '50%', width: '42px', height: '42px', fontSize: '16px', fontWeight: 'bold',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.15)', zIndex: 999
           }}
           title="Kembali ke atas"
         >
