@@ -94,6 +94,24 @@ export default function App() {
     }
   };
 
+  // Fungsi untuk membersihkan dan memformat nombor telefon ke format standard WhatsApp (601...)
+  const formatWhatsappNumber = (number) => {
+    if (!number) return '';
+    // Buang semua karakter selain nombor (cth: +, -, jarak)
+    let cleaned = number.replace(/\D/g, '');
+
+    // Jika bermula dengan '0' (cth: 0123456789), tukar kepada '60123456789'
+    if (cleaned.startsWith('0')) {
+      cleaned = '6' + cleaned;
+    }
+    // Jika pengguna masukkan terus nombor tanpa 6 atau 0 di depan (cth: 123456789 dan panjang munasabah)
+    else if (!cleaned.startsWith('60') && cleaned.length >= 9 && cleaned.length <= 10) {
+      cleaned = '60' + cleaned;
+    }
+
+    return cleaned;
+  };
+
   const getCategoryStyle = (cat) => {
     switch (cat) {
       case 'Crushes and Romances': return { bg: '#fff1f2', color: '#e11d48', border: '#fecdd3' };
@@ -1128,7 +1146,7 @@ export default function App() {
                 type="text" 
                 id="productWhatsappInput"
                 name="productWhatsapp"
-                placeholder="No. WhatsApp (Cth: 60123456789)" 
+                placeholder="No. WhatsApp (Cth: 0123456789 / 60123456789)" 
                 value={productWhatsapp}
                 onChange={(e) => setProductWhatsapp(e.target.value)}
                 style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }}
@@ -1165,7 +1183,7 @@ export default function App() {
             </div>
           </form>
 
-          {/* SENARAI PRODUK (Diubah object-fit kepada contain supaya tidak terpotong di telefon) */}
+          {/* SENARAI PRODUK */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
             {products.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
@@ -1227,7 +1245,10 @@ export default function App() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {!isSold && (
                         <button 
-                          onClick={() => window.open(`https://wa.me/${prod.whatsapp}?text=Hai,%20saya%20berminat%20dengan%20produk%20${encodeURIComponent(prod.title)}%20yang%20diiklankan%20di%20UMS%20Marketplace.`, '_blank')}
+                          onClick={() => {
+                            const formattedPhone = formatWhatsappNumber(prod.whatsapp);
+                            window.open(`https://wa.me/${formattedPhone}?text=Hai,%20saya%20berminat%20dengan%20produk%20${encodeURIComponent(prod.title)}%20yang%20diiklankan%20di%20UMS%20Marketplace.`, '_blank');
+                          }}
                           style={{ width: '100%', backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '8px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
                         >
                           WhatsApp Penjual
