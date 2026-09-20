@@ -20,6 +20,7 @@ export default function App() {
 
   const [confessions, setConfessions] = useState([]);
   const [pendingConfessions, setPendingConfessions] = useState([]);
+  const [pendingProducts, setPendingProducts] = useState([]);
   const [newContent, setNewContent] = useState('');
   const [category, setCategory] = useState('Campus Life');
   const [imageFile, setImageFile] = useState(null);
@@ -155,8 +156,10 @@ export default function App() {
       console.error("Ralat real-time confessions: ", error);
     });
 
+    // Ambil produk yang berstatus 'available' atau 'sold' sahaja untuk paparan umum
     const qProducts = query(
       collection(db, 'products'),
+      where('status', 'in', ['available', 'sold']),
       orderBy('createdAt', 'desc')
     );
     const unsubscribeProducts = onSnapshot(qProducts, (snapshot) => {
@@ -202,6 +205,7 @@ export default function App() {
   useEffect(() => {
     if (!isAdmin) {
       setPendingConfessions([]);
+      setPendingProducts([]);
       return;
     }
 
@@ -221,7 +225,27 @@ export default function App() {
       console.error("Ralat pending confessions: ", error);
     });
 
-    return () => unsubPending();
+    // Ambil produk berstatus 'pending' untuk admin
+    const qPendingProducts = query(
+      collection(db, 'products'),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubPendingProducts = onSnapshot(qPendingProducts, (snapshot) => {
+      const pendingProdData = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+      setPendingProducts(pendingProdData);
+    }, (error) => {
+      console.error("Ralat pending products: ", error);
+    });
+
+    return () => {
+      unsubPending();
+      unsubPendingProducts();
+    };
   }, [isAdmin]);
 
   useEffect(() => {
@@ -328,13 +352,14 @@ export default function App() {
 
     setProductLoading(true);
     try {
+      // Tetapkan status kepada 'pending' supaya ia menunggu kelulusan admin
       const docRef = await addDoc(collection(db, 'products'), {
         title: productTitle,
         price: productPrice,
         category: productCategory,
         whatsapp: productWhatsapp,
         imageUrl: productImagePreview || null,
-        status: 'available',
+        status: 'pending',
         createdAt: serverTimestamp()
       });
 
@@ -347,7 +372,7 @@ export default function App() {
       setProductWhatsapp('');
       setProductImageFile(null);
       setProductImagePreview(null);
-      alert("Iklan produk berjaya dihantar ke Marketplace!");
+      alert("Iklan produk berjaya dihantar! Ia akan dipaparkan setelah diluluskan oleh Admin.");
     } catch (error) {
       console.error("Ralat menghantar produk: ", error);
       alert("Gagal menghantar iklan produk.");
@@ -375,6 +400,17 @@ export default function App() {
     } catch (error) {
       console.error("Ralat meluluskan confession:", error);
       alert("Gagal meluluskan confession.");
+    }
+  };
+
+  const handleApproveProduct = async (id) => {
+    try {
+      const productRef = doc(db, 'products', id);
+      await updateDoc(productRef, { status: 'available' });
+      alert("Produk telah diluluskan dan kini disiarkan di Marketplace.");
+    } catch (error) {
+      console.error("Ralat meluluskan produk:", error);
+      alert("Gagal meluluskan produk.");
     }
   };
 
@@ -558,6 +594,8 @@ export default function App() {
     alert("Telah log keluar.");
   };
 
+  const totalPendingCount = pendingConfessions.length + pendingProducts.length;
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -677,23 +715,11 @@ export default function App() {
             style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
             title="Klik 3 kali untuk panel admin"
           >
-            <div style={{ 
-              height: '34px', 
-              padding: '0 10px',
-              borderRadius: '8px', 
-              background: 'linear-gradient(135deg, #0b192c 0%, #1e3e62 100%)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              color: '#fbbf24', 
-              fontWeight: '900', 
-              fontSize: '13px',
-              letterSpacing: '0.8px',
-              boxShadow: '0 4px 10px rgba(11, 25, 44, 0.25)',
-              border: '1.5px solid #fbbf24'
-            }}>
-              UMS KK
-            </div>
+            <img 
+              src="logo.png" 
+              alt="Logo UMS" 
+              style={{ height: '34px', maxHeight: '34px', objectFit: 'contain', borderRadius: '6px' }} 
+            />
             <span style={{ fontWeight: '900', fontSize: '14px', letterSpacing: '-0.3px', color: '#0f172a' }}>
                CONFESSION <span style={{ color: '#e11d48' }}>HUB</span>
             </span>
@@ -704,20 +730,9 @@ export default function App() {
               onClick={() => window.open('https://www.google.com/search?q=sabah+malaysia', '_blank')}
               className="location-pill" 
               style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '4px', 
-                padding: '5px 10px', 
-                backgroundColor: '#ffffff', 
-                border: '1.5px solid #cbd5e1', 
-                borderRadius: '20px', 
-                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                fontSize: '11px',
-                fontWeight: '800',
-                color: '#0f172a',
-                userSelect: 'none',
-                transition: 'all 0.2s ease',
-                cursor: 'pointer'
+                display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', backgroundColor: '#ffffff', 
+                border: '1.5px solid #cbd5e1', borderRadius: '20px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                fontSize: '11px', fontWeight: '800', color: '#0f172a', userSelect: 'none', transition: 'all 0.2s ease', cursor: 'pointer'
               }}
               title="Klik untuk info lanjut mengenai Sabah, Malaysia"
             >
@@ -734,15 +749,8 @@ export default function App() {
         </div>
 
         <div style={{ 
-          display: 'flex', 
-          gap: '6px', 
-          alignItems: 'center', 
-          backgroundColor: '#e2e8f0', 
-          padding: '4px', 
-          borderRadius: '14px', 
-          width: '100%',
-          justifyContent: 'space-between',
-          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.04)'
+          display: 'flex', gap: '6px', alignItems: 'center', backgroundColor: '#e2e8f0', padding: '4px', 
+          borderRadius: '14px', width: '100%', justifyContent: 'space-between', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.04)'
         }}>
           <button 
             onClick={() => setActiveTab('home')}
@@ -786,7 +794,7 @@ export default function App() {
                 padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
               }}
             >
-              🛡️ Admin {pendingConfessions.length > 0 && `(${pendingConfessions.length})`}
+              🛡️ Admin {totalPendingCount > 0 && `(${totalPendingCount})`}
             </button>
           )}
 
@@ -815,65 +823,129 @@ export default function App() {
         </div>
       )}
 
-      {/* PANEL ADMIN */}
+      {/* PANEL ADMIN: MELULUSKAN CONFESSION & PRODUK MARKETPLACE */}
       {activeTab === 'admin' && isAdmin ? (
         <div className="fade-in-card" style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>🛡️ Senarai Menunggu Kelulusan</h2>
-            <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>Hantaran di bawah memerlukan kelulusan anda sebelum disiarkan kepada umum.</p>
+          <div style={{ marginBottom: '25px' }}>
+            <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>🛡️ Panel Kelulusan Admin</h2>
+            <p style={{ color: '#334155', fontSize: '13px', margin: 0, fontWeight: '600' }}>Semak dan luluskan hantaran confession serta iklan produk marketplace.</p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {pendingConfessions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Tiada confession yang menunggu kelulusan.</p>
-              </div>
-            ) : (
-              pendingConfessions.map((item) => {
-                const badge = getCategoryStyle(item.category);
-                return (
-                  <div key={item.id} style={{ 
-                    backgroundColor: '#ffffff', border: '2px solid #e11d48', borderRadius: '16px', padding: '18px', 
+          {/* SECTION 1: PENDING CONFESSIONS */}
+          <div style={{ marginBottom: '35px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', marginBottom: '12px' }}>
+              💬 Confession Menunggu Kelulusan ({pendingConfessions.length})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {pendingConfessions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '25px', backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                  <p style={{ color: '#475569', fontSize: '13px', margin: 0, fontWeight: '600' }}>Tiada confession baharu.</p>
+                </div>
+              ) : (
+                pendingConfessions.map((item) => {
+                  const badge = getCategoryStyle(item.category);
+                  return (
+                    <div key={item.id} style={{ 
+                      backgroundColor: '#ffffff', border: '2px solid #e11d48', borderRadius: '16px', padding: '18px', 
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.02)', position: 'relative', boxSizing: 'border-box'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, padding: '3px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase' }}>
+                          {item.category || 'Campus Life'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#475569', fontWeight: '600' }}>
+                          {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Baru saja'}
+                        </span>
+                      </div>
+
+                      <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#0f172a', lineHeight: '1.6', fontSize: '14px', marginBottom: item.imageUrl ? '12px' : '16px', marginTop: 0, fontWeight: '500' }}>
+                        {item.content}
+                      </p>
+
+                      {item.imageUrl && (
+                        <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', textAlign: 'center' }}>
+                          <img src={item.imageUrl} alt="Pending attachment" style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                        <button 
+                          onClick={() => handleDeleteConfession(item.id)}
+                          style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          Tolak / Padam
+                        </button>
+                        <button 
+                          onClick={() => handleApproveConfession(item.id)}
+                          style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          ✅ Luluskan (Publish)
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* SECTION 2: PENDING PRODUCTS (MARKETPLACE) */}
+          <div>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', marginBottom: '12px' }}>
+              🛍️ Iklan Marketplace Menunggu Kelulusan ({pendingProducts.length})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {pendingProducts.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '25px', backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                  <p style={{ color: '#475569', fontSize: '13px', margin: 0, fontWeight: '600' }}>Tiada iklan produk baharu.</p>
+                </div>
+              ) : (
+                pendingProducts.map((prod) => (
+                  <div key={prod.id} style={{ 
+                    backgroundColor: '#ffffff', border: '2px solid #16a34a', borderRadius: '16px', padding: '18px', 
                     boxShadow: '0 4px 6px rgba(0,0,0,0.02)', position: 'relative', boxSizing: 'border-box'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <span style={{ backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, padding: '3px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase' }}>
-                        {item.category || 'Campus Life'}
+                      <span style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', padding: '3px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase' }}>
+                        {prod.category || 'Produk'}
                       </span>
                       <span style={{ fontSize: '11px', color: '#475569', fontWeight: '600' }}>
-                        {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Baru saja'}
+                        WhatsApp: {prod.whatsapp}
                       </span>
                     </div>
 
-                    <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#0f172a', lineHeight: '1.6', fontSize: '14px', marginBottom: item.imageUrl ? '12px' : '16px', marginTop: 0, fontWeight: '500' }}>
-                      {item.content}
-                    </p>
-
-                    {item.imageUrl && (
-                      <div style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', textAlign: 'center' }}>
-                        <img src={item.imageUrl} alt="Pending attachment" style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
+                      {prod.imageUrl && (
+                        <div style={{ width: '100px', height: '100px', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#f1f5f9', flexShrink: 0 }}>
+                          <img src={prod.imageUrl} alt={prod.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      <div>
+                        <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0' }}>{prod.title}</h4>
+                        <p style={{ fontSize: '15px', fontWeight: '900', color: '#e11d48', margin: 0 }}>{prod.price}</p>
                       </div>
-                    )}
+                    </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                       <button 
-                        onClick={() => handleDeleteConfession(item.id)}
+                        onClick={() => handleDeleteProduct(prod.id)}
                         style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
                       >
                         Tolak / Padam
                       </button>
                       <button 
-                        onClick={() => handleApproveConfession(item.id)}
+                        onClick={() => handleApproveProduct(prod.id)}
                         style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
                       >
-                        ✅ Luluskan (Publish)
+                        ✅ Luluskan Iklan
                       </button>
                     </div>
                   </div>
-                );
-              })
-            )}
+                ))
+              )}
+            </div>
           </div>
+
         </div>
       ) : activeTab === 'home' ? (
         /* HOME PAGE */
@@ -1004,7 +1076,7 @@ export default function App() {
 
         </div>
       ) : activeTab === 'marketplace' ? (
-        /* MARKETPLACE PAGE DENGAN SAiz TETAP & OBJECT-FIT: COVER SEPERTI SHOPEE */
+        /* MARKETPLACE PAGE */
         <div className="fade-in-card" style={{ maxWidth: '720px', margin: '0 auto', padding: '30px 16px', boxSizing: 'border-box' }}>
           
           <div style={{ marginBottom: '20px' }}>
@@ -1096,11 +1168,11 @@ export default function App() {
             </div>
           </form>
 
-          {/* SENARAI PRODUK: KONTENA TINGGI TETAP 180px & OBJECT-FIT: COVER SEPERTI SHOPEE */}
+          {/* SENARAI PRODUK */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
             {products.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Belum ada produk diiklankan di marketplace.</p>
+                <p style={{ color: '#475569', fontSize: '14px', margin: 0, fontWeight: '600' }}>Belum ada produk diluluskan di marketplace.</p>
               </div>
             ) : (
               products.map((prod) => {
@@ -1119,25 +1191,14 @@ export default function App() {
                     <div>
                       {prod.imageUrl ? (
                         <div style={{ 
-                          width: '100%', 
-                          height: '180px', /* Tetap saiz ketinggian kotak produk seperti Shopee */ 
-                          borderRadius: '10px', 
-                          overflow: 'hidden', 
-                          marginBottom: '10px', 
-                          backgroundColor: '#f1f5f9', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center', 
-                          position: 'relative' 
+                          width: '100%', height: '180px', borderRadius: '10px', overflow: 'hidden', 
+                          marginBottom: '10px', backgroundColor: '#f1f5f9', display: 'flex', 
+                          alignItems: 'center', justifyContent: 'center', position: 'relative' 
                         }}>
                           <img 
                             src={prod.imageUrl} 
                             alt={prod.title} 
-                            style={{ 
-                              width: '100%', 
-                              height: '100%', 
-                              objectFit: 'cover' /* Memotong & meratakan gambar memenuhi kotak petak secara kemas tanpa regang melintang */ 
-                            }} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                           />
                           {isSold && (
                             <div style={{ position: 'absolute', inset: '0', backgroundColor: 'rgba(15, 23, 42, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
