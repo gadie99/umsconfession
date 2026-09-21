@@ -789,7 +789,7 @@ export default function App() {
               padding: '6px 4px', borderRadius: '8px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
             }}
           >
-            💬 Luah
+            💬 Confess
           </button>
 
           <button 
@@ -800,7 +800,7 @@ export default function App() {
               padding: '6px 4px', borderRadius: '8px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
             }}
           >
-            🛍️ Market
+            🛍️ Marketplace
           </button>
 
           {isAdmin && (
@@ -1149,7 +1149,7 @@ export default function App() {
                 type="text" 
                 id="productWhatsappInput"
                 name="productWhatsapp"
-                placeholder="No. WhatsApp (Cth: 0162565683 / 60162565683)" 
+                placeholder="No. WhatsApp " 
                 value={productWhatsapp}
                 onChange={(e) => setProductWhatsapp(e.target.value)}
                 style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#0f172a' }}
