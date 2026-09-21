@@ -710,11 +710,12 @@ export default function App() {
       `}</style>
 
       {/* NAVBAR */}
+      {/* NAVBAR */}
       <nav style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        padding: isScrolled ? '8px 16px' : '12px 16px', 
+        padding: isScrolled ? '8px 12px' : '10px 12px', 
         backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.95)', 
         backdropFilter: 'blur(12px)',
         borderBottom: '2px solid #e2e8f0',
@@ -722,43 +723,43 @@ export default function App() {
         top: 0,
         zIndex: 100,
         boxShadow: isScrolled ? '0 10px 25px rgba(11, 25, 44, 0.1)' : '0 4px 20px rgba(11, 25, 44, 0.05)',
-        gap: '10px',
+        gap: '8px',
         flexWrap: 'wrap',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '100%' }}>
           <div 
             onClick={handleLogoClick}
-            style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Klik 3 kali untuk panel admin"
           >
             <img 
               src="logo.png" 
               alt="Logo UMS" 
-              style={{ height: '34px', maxHeight: '34px', objectFit: 'contain', borderRadius: '6px' }} 
+              style={{ height: '30px', maxHeight: '30px', objectFit: 'contain', borderRadius: '6px' }} 
             />
-            <span style={{ fontWeight: '900', fontSize: '14px', letterSpacing: '-0.3px', color: '#0f172a' }}>
+            <span style={{ fontWeight: '900', fontSize: '13px', letterSpacing: '-0.3px', color: '#0f172a' }}>
                CONFESSION <span style={{ color: '#e11d48' }}>HUB</span>
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div 
               onClick={() => window.open('https://www.google.com/search?q=sabah+malaysia', '_blank')}
               className="location-pill" 
               style={{ 
-                display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', backgroundColor: '#ffffff', 
+                display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', backgroundColor: '#ffffff', 
                 border: '1.5px solid #cbd5e1', borderRadius: '20px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                fontSize: '11px', fontWeight: '800', color: '#0f172a', userSelect: 'none', transition: 'all 0.2s ease', cursor: 'pointer'
+                fontSize: '10px', fontWeight: '800', color: '#0f172a', userSelect: 'none', transition: 'all 0.2s ease', cursor: 'pointer'
               }}
               title="Klik untuk info lanjut mengenai Sabah, Malaysia"
             >
-              <span style={{ fontSize: '12px', lineHeight: 1 }}>📍</span>
-              <span>Sabah, Malaysia</span>
+              <span style={{ fontSize: '11px', lineHeight: 1 }}>📍</span>
+              <span>Sabah</span>
             </div>
 
             {isAdmin && (
-              <button onClick={handleLogout} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+              <button onClick={handleLogout} style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '4px 8px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>
                 Keluar
               </button>
             )}
@@ -766,15 +767,15 @@ export default function App() {
         </div>
 
         <div style={{ 
-          display: 'flex', gap: '6px', alignItems: 'center', backgroundColor: '#e2e8f0', padding: '4px', 
-          borderRadius: '14px', width: '100%', justifyContent: 'space-between', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.04)'
+          display: 'flex', gap: '4px', alignItems: 'center', backgroundColor: '#e2e8f0', padding: '3px', 
+          borderRadius: '12px', width: '100%', justifyContent: 'space-between', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.04)'
         }}>
           <button 
             onClick={() => setActiveTab('home')}
             className={activeTab === 'home' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
-              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '11px', color: '#0f172a',
+              padding: '6px 4px', borderRadius: '8px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
             }}
           >
             🏠 Home
@@ -784,22 +785,22 @@ export default function App() {
             onClick={() => setActiveTab('confession')}
             className={activeTab === 'confession' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
-              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '11px', color: '#0f172a',
+              padding: '6px 4px', borderRadius: '8px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
             }}
           >
-            💬 Confession
+            💬 Luah
           </button>
 
           <button 
             onClick={() => setActiveTab('marketplace')}
             className={activeTab === 'marketplace' ? 'nav-button-active' : 'nav-button'}
             style={{ 
-              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
-              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '11px', color: '#0f172a',
+              padding: '6px 4px', borderRadius: '8px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
             }}
           >
-            🛍️ Marketplace
+            🛍️ Market
           </button>
 
           {isAdmin && (
@@ -807,8 +808,8 @@ export default function App() {
               onClick={() => setActiveTab('admin')}
               className={activeTab === 'admin' ? 'nav-button-active' : 'nav-button'}
               style={{ 
-                flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
-                padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
+                flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '11px', color: '#0f172a',
+                padding: '6px 4px', borderRadius: '8px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', boxSizing: 'border-box'
               }}
             >
               🛡️ Admin {totalPendingCount > 0 && `(${totalPendingCount})`}
@@ -819,12 +820,12 @@ export default function App() {
             onClick={() => window.open('https://ehailingumsapp.netlify.app', '_blank')}
             className="nav-button"
             style={{ 
-              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '12px', color: '#0f172a',
-              padding: '8px 10px', borderRadius: '10px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', boxSizing: 'border-box'
+              flex: '1 1 0%', minWidth: '0', border: 'none', cursor: 'pointer', fontWeight: '800', fontSize: '11px', color: '#0f172a',
+              padding: '6px 4px', borderRadius: '8px', textAlign: 'center', backgroundColor: 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', boxSizing: 'border-box'
             }}
           >
-            🚗 E-Hailing <span style={{ fontSize: '10px', color: '#e11d48' }}>↗</span>
+            🚗 E-Hailing <span style={{ fontSize: '9px', color: '#e11d48' }}>↗</span>
           </button>
         </div>
       </nav>
