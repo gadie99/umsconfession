@@ -739,7 +739,7 @@ export default function App() {
               style={{ height: '30px', maxHeight: '30px', objectFit: 'contain', borderRadius: '6px' }} 
             />
             <span style={{ fontWeight: '900', fontSize: '13px', letterSpacing: '-0.3px', color: '#0f172a' }}>
-               CONFESSION <span style={{ color: '#e11d48' }}>HUB</span>
+               UMS <span style={{ color: '#e11d48' }}>HUB</span>
             </span>
           </div>
 
