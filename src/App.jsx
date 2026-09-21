@@ -94,18 +94,13 @@ export default function App() {
     }
   };
 
-  // Fungsi untuk membersihkan dan memformat nombor telefon ke format standard WhatsApp (+60 / 60...)
   const formatWhatsappNumber = (number) => {
     if (!number) return '';
-    // Buang semua aksara bukan nombor (cth: +, -, jarak, simbol)
     let cleaned = number.replace(/\D/g, '');
 
-    // Jika nombor bermula dengan '0', buang '0' tersebut dan tambah '60' di depan
     if (cleaned.startsWith('0')) {
       cleaned = '60' + cleaned.slice(1);
-    }
-    // Jika pengguna masukkan terus nombor tanpa 6 atau 0 di depan (cth: 162565683)
-    else if (!cleaned.startsWith('60') && cleaned.length >= 9 && cleaned.length <= 10) {
+    } else if (!cleaned.startsWith('60') && cleaned.length >= 9 && cleaned.length <= 10) {
       cleaned = '60' + cleaned;
     }
 
@@ -162,13 +157,16 @@ export default function App() {
     );
     
     const unsubscribeConfessions = onSnapshot(q, (snapshot) => {
-      const confessionsData = snapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-        comments: []
-      }));
-
-      setConfessions(confessionsData);
+      setConfessions(prevConfessions => {
+        return snapshot.docs.map(docSnap => {
+          const existing = prevConfessions.find(c => c.id === docSnap.id);
+          return {
+            id: docSnap.id,
+            ...docSnap.data(),
+            comments: existing ? existing.comments : []
+          };
+        });
+      });
       setTotalConfessionsCount(snapshot.size);
     }, (error) => {
       console.error("Ralat real-time confessions: ", error);
@@ -271,11 +269,15 @@ export default function App() {
       const commentsQuery = query(collection(db, 'confessions', confession.id, 'comments'), orderBy('createdAt', 'asc'));
       
       return onSnapshot(commentsQuery, (commentSnapshot) => {
-        const commentsData = commentSnapshot.docs.map(cDoc => ({
-          id: cDoc.id,
-          ...cDoc.data(),
-          replies: []
-        }));
+        const commentsData = commentSnapshot.docs.map(cDoc => {
+          const existingConfession = confessions.find(c => c.id === confession.id);
+          const existingComment = existingConfession?.comments?.find(cmt => cmt.id === cDoc.id);
+          return {
+            id: cDoc.id,
+            ...cDoc.data(),
+            replies: existingComment ? existingComment.replies : []
+          };
+        });
 
         setConfessions(prevConfessions => 
           prevConfessions.map(c => c.id === confession.id ? { ...c, comments: commentsData } : c)
